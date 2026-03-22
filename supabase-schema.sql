@@ -107,6 +107,28 @@ CREATE POLICY "Service role can delete post images"
   USING (bucket_id = 'post-images');
 
 -- =============================================
+-- DUPLICATE POST CLEANUP
+-- =============================================
+
+-- 1. Find duplicate posts by title
+SELECT title, COUNT(*) as count, array_agg(id) as ids, array_agg(slug) as slugs
+FROM posts
+GROUP BY title
+HAVING COUNT(*) > 1
+ORDER BY count DESC;
+
+-- 2. Delete duplicates — keeps the most recent copy of each title
+DELETE FROM posts
+WHERE id IN (
+  SELECT id FROM (
+    SELECT id,
+           ROW_NUMBER() OVER (PARTITION BY title ORDER BY published_at DESC, created_at DESC) AS rn
+    FROM posts
+  ) dupes
+  WHERE rn > 1
+);
+
+-- =============================================
 -- STORAGE DIAGNOSTICS — Run if images not showing
 -- =============================================
 

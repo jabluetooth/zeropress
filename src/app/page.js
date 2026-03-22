@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { PostCardLarge, PostCardMedium, PostCardCompact } from '@/components/PostCard';
+import PostGrid from '@/components/PostGrid';
 import NewsletterForm from '@/components/NewsletterForm';
 import EncryptedText from '@/components/EncryptedText';
 
@@ -30,28 +30,18 @@ async function getPosts() {
   return data || [];
 }
 
-async function getAllTags() {
-  const { data } = await supabase
-    .from('posts')
-    .select('tags')
-    .eq('status', 'published');
-
-  const tagCount = {};
-  (data || []).forEach(post => {
-    (post.tags || []).forEach(tag => {
-      tagCount[tag] = (tagCount[tag] || 0) + 1;
-    });
-  });
-  return Object.entries(tagCount).sort((a, b) => b[1] - a[1]).slice(0, 15);
-}
-
 export default async function HomePage() {
   const posts = await getPosts();
-  const tags = await getAllTags();
 
-  // Bento slots
-  const [featured, ...gridPosts] = posts;
-  const [p0, p1, p2, p3, p4, p5, p6, ...rest] = gridPosts;
+  // Deduplicate by slug just in case n8n created duplicates
+  const seen = new Set();
+  const unique = posts.filter(p => {
+    if (seen.has(p.slug)) return false;
+    seen.add(p.slug);
+    return true;
+  });
+
+  const [featured, ...gridPosts] = unique;
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px' }}>
@@ -118,47 +108,13 @@ export default async function HomePage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Latest Posts</span>
           </div>
-          {posts.length === 0 ? (
+          {gridPosts.length === 0 ? (
             <div className="card" style={{ padding: '48px 32px', textAlign: 'center' }}>
               <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>No posts yet. The AI pipeline will publish content here automatically.</p>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: 8 }}>Check back soon or subscribe to get notified.</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-              {/* Row 1: Large (2/3) + Medium (1/3) */}
-              {(p0 || p1) && (
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, alignItems: 'stretch' }}>
-                  {p0 && <PostCardLarge post={p0} />}
-                  {p1 && <PostCardMedium post={p1} />}
-                </div>
-              )}
-
-              {/* Row 2: Medium (1/3) + Large (2/3) — mirrored */}
-              {(p2 || p3) && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16, alignItems: 'stretch' }}>
-                  {p2 && <PostCardMedium post={p2} />}
-                  {p3 && <PostCardLarge post={p3} />}
-                </div>
-              )}
-
-              {/* Row 3: Three compact cards */}
-              {(p4 || p5 || p6) && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, alignItems: 'stretch' }}>
-                  {p4 && <PostCardCompact post={p4} />}
-                  {p5 && <PostCardCompact post={p5} />}
-                  {p6 && <PostCardCompact post={p6} />}
-                </div>
-              )}
-
-              {/* Remaining: 3-column compact grid */}
-              {rest.length > 0 && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, alignItems: 'stretch' }}>
-                  {rest.map(post => <PostCardCompact key={post.id} post={post} />)}
-                </div>
-              )}
-
-            </div>
+            <PostGrid posts={gridPosts} />
           )}
         </section>
 

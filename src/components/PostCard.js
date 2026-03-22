@@ -69,7 +69,7 @@ export function PostCardLarge({ post }) {
             {post.title}
           </h2>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {(post.tags || []).slice(0, 3).map(tag => <span className="tag" key={tag}>{tag}</span>)}
+            {(post.tags || []).slice(0, 3).map(tag => <span className="tag" key={tag} style={{ cursor: 'pointer' }} onClick={e => { e.preventDefault(); window.location.href = `/tag/${tag.toLowerCase()}`; }}>{tag}</span>)}
           </div>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.65, flex: 1 }}>
             {post.excerpt?.substring(0, 200)}
@@ -92,7 +92,7 @@ export function PostCardMedium({ post }) {
             {post.title}
           </h3>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {(post.tags || []).slice(0, 2).map(tag => <span className="tag" key={tag}>{tag}</span>)}
+            {(post.tags || []).slice(0, 2).map(tag => <span className="tag" key={tag} style={{ cursor: 'pointer' }} onClick={e => { e.preventDefault(); window.location.href = `/tag/${tag.toLowerCase()}`; }}>{tag}</span>)}
           </div>
           <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: 1.6, flex: 1 }}>
             {post.excerpt?.substring(0, 110)}
@@ -115,7 +115,7 @@ export function PostCardCompact({ post }) {
             {post.title}
           </h3>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {(post.tags || []).slice(0, 2).map(tag => <span className="tag" key={tag}>{tag}</span>)}
+            {(post.tags || []).slice(0, 2).map(tag => <span className="tag" key={tag} style={{ cursor: 'pointer' }} onClick={e => { e.preventDefault(); window.location.href = `/tag/${tag.toLowerCase()}`; }}>{tag}</span>)}
           </div>
           <Meta post={post} />
         </div>

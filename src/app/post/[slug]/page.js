@@ -5,6 +5,19 @@ import { notFound } from 'next/navigation';
 
 export const revalidate = 60;
 
+const SUPABASE_URL = 'https://qvhlprtppakttxseqkgh.supabase.co';
+function toPublicUrl(url) {
+  if (!url) return null;
+  if (url.startsWith('http') && url.includes('/object/public/')) return url;
+  if (url.startsWith('http') && url.includes('/storage/v1/object/')) {
+    return url.replace('/storage/v1/object/', '/storage/v1/object/public/');
+  }
+  if (!url.startsWith('http')) {
+    return `${SUPABASE_URL}/storage/v1/object/public/${url}`;
+  }
+  return url;
+}
+
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const { data: post } = await supabase
@@ -89,12 +102,20 @@ export default async function PostPage({ params }) {
 
           {/* Featured image */}
           {post.featured_image_url && (
-            <div style={{
-              width: '100%', height: 400, borderRadius: 12, marginBottom: 40,
-              backgroundImage: `url(${post.featured_image_url})`,
-              backgroundSize: 'cover', backgroundPosition: 'center',
-              border: '1px solid var(--border)',
-            }} />
+            <img
+              src={toPublicUrl(post.featured_image_url)}
+              alt={post.title}
+              style={{
+                width: '100%',
+                height: 'auto',
+                maxHeight: 480,
+                objectFit: 'cover',
+                borderRadius: 12,
+                marginBottom: 40,
+                display: 'block',
+                border: '1px solid var(--border)',
+              }}
+            />
           )}
 
           {/* Body */}

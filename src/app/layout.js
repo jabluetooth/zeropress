@@ -7,7 +7,7 @@ export const metadata = {
   },
   description: process.env.NEXT_PUBLIC_SITE_DESCRIPTION || 'AI-generated insights on technology, machine learning, and the future.',
   icons: {
-    icon: '/favicon.svg',
+    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
     shortcut: '/favicon.svg',
   },
   openGraph: {
