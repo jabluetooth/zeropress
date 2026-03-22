@@ -69,7 +69,7 @@ export function PostCardLarge({ post }) {
             {post.title}
           </h2>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {(post.tags || []).slice(0, 3).map(tag => <span className="tag" key={tag} style={{ cursor: 'pointer' }} onClick={e => { e.preventDefault(); window.location.href = `/tag/${tag.toLowerCase()}`; }}>{tag}</span>)}
+            {(post.tags || []).slice(0, 3).map(tag => <a key={tag} className="tag" href={`/tag/${encodeURIComponent(tag.toLowerCase())}`} onClick={e => e.stopPropagation()}>{tag}</a>)}
           </div>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.65, flex: 1 }}>
             {post.excerpt?.substring(0, 200)}

@@ -51,7 +51,7 @@ export default function SpotlightHero() {
       }} />
 
       {/* Content */}
-      <div style={{ position: 'relative', zIndex: 2, padding: '56px 48px' }}>
+      <div className="hero-content" style={{ position: 'relative', zIndex: 2 }}>
         <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>
           ⚡ AI-Curated Tech Insights
         </p>

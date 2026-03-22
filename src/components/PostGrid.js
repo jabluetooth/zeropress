@@ -24,7 +24,7 @@ export default function PostGrid({ posts }) {
 
       {/* Row 1: Large (2/3) + Medium (1/3) */}
       {(p0 || p1) && (
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, alignItems: 'stretch' }}>
+        <div className="bento-row-1">
           {p0 && <PostCardLarge post={p0} />}
           {p1 && <PostCardMedium post={p1} />}
         </div>
@@ -32,7 +32,7 @@ export default function PostGrid({ posts }) {
 
       {/* Row 2: Medium (1/3) + Large (2/3) */}
       {(p2 || p3) && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16, alignItems: 'stretch' }}>
+        <div className="bento-row-2">
           {p2 && <PostCardMedium post={p2} />}
           {p3 && <PostCardLarge post={p3} />}
         </div>
@@ -40,7 +40,7 @@ export default function PostGrid({ posts }) {
 
       {/* Row 3: Three compact cards */}
       {(p4 || p5 || p6) && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, alignItems: 'stretch' }}>
+        <div className="bento-row-3">
           {p4 && <PostCardCompact post={p4} />}
           {p5 && <PostCardCompact post={p5} />}
           {p6 && <PostCardCompact post={p6} />}

@@ -44,7 +44,7 @@ function Nav() {
         height: 72, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 2, textDecoration: 'none' }}>
-          <img src="/logo.svg" alt="ZeroPress logo" style={{ width: 32, height: 32 }} />
+          <img src="/logo.svg" alt="ZeroPress logo" style={{ width: 24, height: 24 }} />
           <span style={{
             fontWeight: 700, fontSize: '1.15rem', color: 'var(--text-primary)',
             letterSpacing: '-0.02em',
@@ -72,10 +72,10 @@ function Footer() {
       justifyContent: 'center',
       position: 'relative',
     }}>
-      <p style={{ textAlign: 'center' }}>
+      <p style={{ textAlign: 'center', width: '100%' }}>
         &copy; {new Date().getFullYear()} {process.env.NEXT_PUBLIC_SITE_NAME || 'AI Pulse'}
       </p>
-      <div style={{
+      <div className="footer-pill" style={{
         position: 'absolute',
         right: 24,
         top: '50%',

@@ -50,7 +50,7 @@ export default async function HomePage() {
   const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px' }}>
+    <div className="page-wrapper">
 
       {/* Hero */}
       <SpotlightHero />
@@ -62,7 +62,7 @@ export default async function HomePage() {
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--amber)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>★ Featured</span>
           </div>
           <a href={`/post/${featured.slug}`} style={{ textDecoration: 'none' }}>
-            <div className="card" style={{ padding: 0, overflow: 'hidden', display: 'grid', gridTemplateColumns: featured.featured_image_url ? '1fr 1fr' : '1fr' }}>
+            <div className={`card ${featured.featured_image_url ? 'featured-card-grid' : ''}`} style={{ padding: 0, overflow: 'hidden' }}>
               {featured.featured_image_url && (
                 <div style={{ minHeight: 300, overflow: 'hidden' }}>
                   <img
@@ -72,7 +72,7 @@ export default async function HomePage() {
                   />
                 </div>
               )}
-              <div style={{ padding: '36px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 14 }}>
+              <div className="featured-card-content">
                 <h2 style={{ fontSize: '1.7rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1.25 }}>
                   {featured.title}
                 </h2>
@@ -96,7 +96,7 @@ export default async function HomePage() {
       )}
 
       {/* Main grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 40, alignItems: 'start' }}>
+      <div className="main-grid">
 
         {/* Bento posts */}
         <section>
@@ -114,7 +114,7 @@ export default async function HomePage() {
         </section>
 
         {/* Sidebar */}
-        <aside style={{ position: 'sticky', top: 96 }}>
+        <aside className="sidebar">
           {/* Newsletter */}
           <div className="card" style={{ padding: '28px 24px', marginBottom: 24 }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 8 }}>
