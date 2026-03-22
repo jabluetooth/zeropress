@@ -130,6 +130,7 @@ a:hover {
   margin: 2.5rem 0 1rem;
   color: var(--text-primary);
   letter-spacing: -0.02em;
+  scroll-margin-top: 88px;
 }
 .prose-custom h3 {
   font-family: 'Outfit', sans-serif;
@@ -137,6 +138,7 @@ a:hover {
   font-size: 1.25rem;
   margin: 2rem 0 0.75rem;
   color: var(--text-primary);
+  scroll-margin-top: 88px;
 }
 .prose-custom p {
   margin-bottom: 1.25rem;
