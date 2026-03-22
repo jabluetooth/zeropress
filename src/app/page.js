@@ -1,7 +1,8 @@
 import { supabase } from '@/lib/supabase';
 import PostGrid from '@/components/PostGrid';
 import NewsletterForm from '@/components/NewsletterForm';
-import EncryptedText from '@/components/EncryptedText';
+import TopicsSearch from '@/components/TopicsSearch';
+import SpotlightHero from '@/components/SpotlightHero';
 
 export const revalidate = 60;
 
@@ -43,22 +44,16 @@ export default async function HomePage() {
 
   const [featured, ...gridPosts] = unique;
 
+  // Aggregate tags with counts from all posts
+  const tagCounts = {};
+  unique.forEach(p => (p.tags || []).forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; }));
+  const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
+
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px' }}>
 
       {/* Hero */}
-      <section style={{ marginBottom: 48 }} className="fade-in">
-        <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>
-          ⚡ AI-Curated Tech Insights
-        </p>
-        <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.2rem)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 16 }}>
-          <EncryptedText text="Research. Write. Publish." className="glow-text" />
-          <br />
-          <span style={{ color: 'var(--text-secondary)', fontWeight: 400, fontSize: '0.6em' }}>
-            Automated content pipeline powered by AI
-          </span>
-        </h1>
-      </section>
+      <SpotlightHero />
 
       {/* Featured */}
       {featured && (
@@ -131,20 +126,14 @@ export default async function HomePage() {
             <NewsletterForm />
           </div>
 
-          {/* AI Badge */}
-          <div style={{
-            padding: '20px 24px',
-            background: 'var(--accent-glow)', borderRadius: 12,
-            border: '1px solid var(--accent-dim)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <div className="pulse-dot" />
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent)' }}>AI-POWERED</span>
-            </div>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              Content is researched, written, and published by an automated AI pipeline using Groq, Hugging Face, and n8n.
-            </p>
+          {/* Topics */}
+          <div className="card" style={{ padding: '28px 24px' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 16 }}>
+              Topics
+            </h3>
+            <TopicsSearch tags={sortedTags} />
           </div>
+
         </aside>
 
       </div>

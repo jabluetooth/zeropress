@@ -3,23 +3,23 @@
 @plugin "@tailwindcss/typography";
 
 :root {
-  --bg-primary: #0a0a0f;
-  --bg-secondary: #12121a;
-  --bg-card: #16161f;
-  --bg-card-hover: #1c1c28;
-  --bg-elevated: #1e1e2a;
-  --border: #2a2a3a;
-  --border-bright: #3a3a4f;
-  --text-primary: #e8e8ef;
-  --text-secondary: #9898ab;
-  --text-muted: #6b6b80;
-  --accent: #22d3ee;
-  --accent-dim: #0e7490;
-  --accent-glow: rgba(34, 211, 238, 0.15);
-  --green: #4ade80;
-  --amber: #fbbf24;
-  --rose: #fb7185;
-  --purple: #a78bfa;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f4f4f8;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f0f0f6;
+  --bg-elevated: #e8e8f0;
+  --border: #e2e2ea;
+  --border-bright: #c8c8d8;
+  --text-primary: #111118;
+  --text-secondary: #52525e;
+  --text-muted: #8888a0;
+  --accent: #0891b2;
+  --accent-dim: #bae6fd;
+  --accent-glow: rgba(8, 145, 178, 0.1);
+  --green: #16a34a;
+  --amber: #d97706;
+  --rose: #e11d48;
+  --purple: #7c3aed;
 }
 
 * {
@@ -73,7 +73,7 @@ a:hover {
   background: var(--bg-card-hover);
   border-color: var(--border-bright);
   transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
 }
 
 /* Tag pill */
@@ -261,6 +261,49 @@ a:hover {
 }
 .newsletter-input::placeholder {
   color: var(--text-muted);
+}
+
+/* Spotlight */
+.spotlight {
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
+  width: 140%;
+  height: 140%;
+  opacity: 0;
+  animation: spotlight-in 2s ease 0.5s 1 forwards;
+}
+@keyframes spotlight-in {
+  0%   { opacity: 0; transform: translate(-72%, -62%) scale(0.5); }
+  100% { opacity: 1; transform: translate(-50%, -40%) scale(1); }
+}
+
+/* Aurora text */
+.aurora-text {
+  background-size: 200% auto;
+  animation: aurora 8s ease-in-out infinite alternate;
+}
+@keyframes aurora {
+  0%   { background-position: 0% 50%;   transform: rotate(-5deg) scale(0.9); }
+  25%  { background-position: 50% 100%; transform: rotate(5deg) scale(1.1); }
+  50%  { background-position: 100% 50%; transform: rotate(-3deg) scale(0.95); }
+  75%  { background-position: 50% 0%;   transform: rotate(3deg) scale(1.05); }
+  100% { background-position: 0% 50%;   transform: rotate(-5deg) scale(0.9); }
+}
+
+/* Animated gradient text */
+.animated-gradient-text {
+  display: inline;
+  background: linear-gradient(to right, var(--color-from, #ffaa40), var(--color-to, #9c40ff), var(--color-from, #ffaa40));
+  background-size: var(--bg-size, 300%) 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 8s linear infinite;
+}
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
 }
 
 /* Noise texture overlay */

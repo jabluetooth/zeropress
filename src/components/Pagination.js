@@ -1,5 +1,8 @@
 'use client';
 
+import { useRef } from 'react';
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+
 export default function Pagination({ page, totalPages, onPageChange }) {
   if (totalPages <= 1) return null;
 
@@ -19,62 +22,84 @@ export default function Pagination({ page, totalPages, onPageChange }) {
     return pages;
   };
 
-  const btnBase = {
-    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    minWidth: 36, height: 36, borderRadius: 8, border: '1px solid var(--border)',
-    background: 'transparent', cursor: 'pointer', fontSize: '0.875rem',
-    fontFamily: 'inherit', fontWeight: 500, transition: 'all 0.15s',
-    color: 'var(--text-secondary)', padding: '0 6px',
-  };
+  const mouseX = useMotionValue(Infinity);
 
-  const activeBtn = {
-    ...btnBase,
-    background: 'var(--accent)', color: 'var(--bg-primary)',
-    border: '1px solid var(--accent)', fontWeight: 700,
-  };
-
-  const disabledBtn = {
-    ...btnBase, opacity: 0.3, cursor: 'not-allowed',
-  };
+  const items = [
+    { key: 'prev', label: '‹', onClick: () => page > 1 && onPageChange(page - 1), disabled: page === 1 },
+    ...getPages().map((p, i) => ({
+      key: p === '...' ? `ellipsis-${i}` : p,
+      label: p,
+      onClick: p === '...' ? null : () => onPageChange(p),
+      active: p === page,
+      ellipsis: p === '...',
+    })),
+    { key: 'next', label: '›', onClick: () => page < totalPages && onPageChange(page + 1), disabled: page === totalPages },
+  ];
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 24 }}>
-
-      {/* Previous */}
-      <button
-        style={page === 1 ? disabledBtn : btnBase}
-        onClick={() => page > 1 && onPageChange(page - 1)}
-        disabled={page === 1}
+    <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32 }}>
+      <motion.div
+        onMouseMove={e => mouseX.set(e.clientX)}
+        onMouseLeave={() => mouseX.set(Infinity)}
+        style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 52 }}
       >
-        ‹
-      </button>
-
-      {/* Page numbers */}
-      {getPages().map((p, i) =>
-        p === '...' ? (
-          <span key={`ellipsis-${i}`} style={{ ...btnBase, border: 'none', cursor: 'default', color: 'var(--text-muted)' }}>
-            …
-          </span>
-        ) : (
-          <button
-            key={p}
-            style={p === page ? activeBtn : btnBase}
-            onClick={() => onPageChange(p)}
-          >
-            {p}
-          </button>
-        )
-      )}
-
-      {/* Next */}
-      <button
-        style={page === totalPages ? disabledBtn : btnBase}
-        onClick={() => page < totalPages && onPageChange(page + 1)}
-        disabled={page === totalPages}
-      >
-        ›
-      </button>
-
+        {items.map(item =>
+          item.ellipsis ? (
+            <span key={item.key} style={{
+              width: 36, height: 36, display: 'inline-flex',
+              alignItems: 'center', justifyContent: 'center',
+              fontSize: '0.8rem', color: 'var(--text-muted)',
+            }}>
+              …
+            </span>
+          ) : (
+            <DockItem
+              key={item.key}
+              mouseX={mouseX}
+              label={item.label}
+              onClick={item.onClick}
+              disabled={item.disabled}
+              active={item.active}
+            />
+          )
+        )}
+      </motion.div>
     </div>
+  );
+}
+
+function DockItem({ mouseX, label, onClick, disabled, active }) {
+  const ref = useRef(null);
+
+  const distance = useTransform(mouseX, val => {
+    const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
+    return val - bounds.x - bounds.width / 2;
+  });
+
+  const sizeTransform = useTransform(distance, [-80, 0, 80], [36, 52, 36]);
+  const size = useSpring(sizeTransform, { stiffness: 300, damping: 28 });
+
+  return (
+    <motion.button
+      ref={ref}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        border: 'none',
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: '0.875rem', fontFamily: 'inherit', fontWeight: active ? 700 : 500,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.35 : 1,
+        background: active ? 'var(--accent)' : 'transparent',
+        color: active ? '#fff' : 'var(--text-secondary)',
+        flexShrink: 0,
+      }}
+      whileHover={!disabled && !active ? { background: 'var(--bg-elevated)' } : {}}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {label}
+    </motion.button>
   );
 }
