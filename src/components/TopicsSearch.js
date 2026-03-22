@@ -39,7 +39,7 @@ export default function TopicsSearch({ tags }) {
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No topics found.</p>
         ) : (
           visible.map(([tag, count]) => (
-            <a key={tag} href={`/tag/${encodeURIComponent(tag.toLowerCase())}`} className="tag" style={{ textDecoration: 'none' }}>
+            <a key={tag} href={`/tag/${tag.toLowerCase()}`} className="tag" style={{ textDecoration: 'none' }}>
               {tag}
               <span style={{ opacity: 0.5, marginLeft: 4, fontSize: '0.7em' }}>{count}</span>
             </a>

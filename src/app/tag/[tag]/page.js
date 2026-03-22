@@ -4,12 +4,14 @@ import { PostCardLarge, PostCardMedium, PostCardCompact } from '@/components/Pos
 export const revalidate = 60;
 
 export async function generateMetadata({ params }) {
-  const { tag } = await params;
+  const { tag: rawTag } = await params;
+  const tag = decodeURIComponent(rawTag).trim();
   return { title: `#${tag}`, description: `Posts tagged with ${tag}` };
 }
 
 export default async function TagPage({ params }) {
-  const { tag } = await params;
+  const { tag: rawTag } = await params;
+  const tag = decodeURIComponent(rawTag).trim();
 
   // Fetch all published posts and filter case-insensitively
   const { data: allPosts } = await supabase
@@ -20,7 +22,7 @@ export default async function TagPage({ params }) {
     .limit(100);
 
   const posts = (allPosts || []).filter(post =>
-    (post.tags || []).some(t => t.toLowerCase() === tag.toLowerCase())
+    (post.tags || []).some(t => t.trim().toLowerCase() === tag.toLowerCase())
   );
 
   const [p0, p1, p2, p3, p4, p5, p6, ...rest] = posts;
