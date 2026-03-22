@@ -6,6 +6,10 @@ export const metadata = {
     template: `%s | ${process.env.NEXT_PUBLIC_SITE_NAME || 'AI Pulse'}`,
   },
   description: process.env.NEXT_PUBLIC_SITE_DESCRIPTION || 'AI-generated insights on technology, machine learning, and the future.',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+  },
   openGraph: {
     type: 'website',
     siteName: process.env.NEXT_PUBLIC_SITE_NAME || 'AI Pulse',
@@ -39,15 +43,7 @@ function Nav() {
         height: 72, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <span style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: 'linear-gradient(135deg, var(--accent), var(--purple))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: "'JetBrains Mono', monospace", fontWeight: 700,
-            fontSize: '0.8rem', color: 'var(--bg-primary)',
-          }}>
-            AI
-          </span>
+          <img src="/logo.svg" alt="ZeroPress logo" style={{ width: 32, height: 32 }} />
           <span style={{
             fontWeight: 700, fontSize: '1.15rem', color: 'var(--text-primary)',
             letterSpacing: '-0.02em',

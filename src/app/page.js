@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import PostCard from '@/components/PostCard';
 import NewsletterForm from '@/components/NewsletterForm';
 import TagCloud from '@/components/TagCloud';
+import EncryptedText from '@/components/EncryptedText';
 
 export const revalidate = 60; // ISR: revalidate every 60 seconds
 
@@ -49,7 +50,7 @@ export default async function HomePage() {
           \u26A1 AI-Curated Tech Insights
         </p>
         <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.2rem)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 16 }}>
-          <span className="glow-text">Research. Write. Publish.</span>
+          <EncryptedText text="Research. Write. Publish." className="glow-text" />
           <br />
           <span style={{ color: 'var(--text-secondary)', fontWeight: 400, fontSize: '0.6em' }}>
             Automated content pipeline powered by AI
