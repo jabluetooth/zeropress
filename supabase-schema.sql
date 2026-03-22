@@ -80,3 +80,56 @@ CREATE POLICY "Service role full access to subscribers"
 CREATE POLICY "Public can subscribe"
   ON subscribers FOR INSERT
   WITH CHECK (true);
+
+-- =============================================
+-- STORAGE BUCKET — Post Images
+-- Run this in the Supabase SQL Editor
+-- =============================================
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('post-images', 'post-images', true)
+ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "Public can view post images"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'post-images');
+
+CREATE POLICY "Service role can upload post images"
+  ON storage.objects FOR INSERT
+  WITH CHECK (bucket_id = 'post-images');
+
+CREATE POLICY "Service role can update post images"
+  ON storage.objects FOR UPDATE
+  USING (bucket_id = 'post-images');
+
+CREATE POLICY "Service role can delete post images"
+  ON storage.objects FOR DELETE
+  USING (bucket_id = 'post-images');
+
+-- =============================================
+-- STORAGE DIAGNOSTICS — Run if images not showing
+-- =============================================
+
+-- 1. Check what image URLs are stored in posts
+SELECT slug, featured_image_url
+FROM posts
+WHERE status = 'published'
+AND featured_image_url IS NOT NULL
+LIMIT 5;
+
+-- 2. Check existing storage policies
+SELECT policyname, cmd, qual
+FROM pg_policies
+WHERE tablename = 'objects' AND schemaname = 'storage';
+
+-- 3. Fix: ensure bucket is public
+UPDATE storage.buckets
+SET public = true
+WHERE id = 'post-images';
+
+-- 4. Fix: drop and recreate public read policy if images still not accessible
+DROP POLICY IF EXISTS "Public can view post images" ON storage.objects;
+
+CREATE POLICY "Public can view post images"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'post-images' AND auth.role() = 'anon' OR auth.role() = 'authenticated' OR auth.role() = 'service_role');

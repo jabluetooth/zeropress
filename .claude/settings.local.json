@@ -11,7 +11,9 @@
       "Bash(cp \"C:/Users/relat/Downloads/zeropress-logo.svg\" E:/Projects/ZeroPress/public/favicon.svg)",
       "Bash(cp \"C:/Users/relat/Downloads/zeropress-logo2.svg\" E:/Projects/ZeroPress/public/logo.svg)",
       "Bash(npx shadcn@latest add \"@aceternity/encrypted-text-demo\")",
-      "Bash(printf \"y\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\")"
+      "Bash(printf \"y\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\")",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }
