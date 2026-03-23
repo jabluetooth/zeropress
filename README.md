@@ -1,12 +1,12 @@
-# AI Pulse — AI-Powered Blog
+# ZeroPress — AI-Powered Blog
 
-A Next.js blog with a Supabase backend, designed to receive content from an automated n8n AI pipeline. Dark dev.to-style design. Hosted free on Vercel.
+A Next.js blog with a Supabase backend, designed to receive content from an automated n8n AI pipeline. Clean, minimal design. Hosted free on Vercel.
 
 ## Stack
 
 - **Next.js 15** — App Router, ISR (revalidates every 60s)
 - **Supabase** — Postgres database for posts + subscribers
-- **Tailwind CSS v4** — Dark theme styling
+- **Framer Motion** — Smooth animations
 - **Vercel** — Free hosting with auto-deploy
 
 ## Quick Start
@@ -40,8 +40,8 @@ Open [http://localhost:3000](http://localhost:3000).
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `API_SECRET_KEY` (same random string you use in n8n)
-   - `NEXT_PUBLIC_SITE_URL` (your Vercel URL, e.g. `https://ai-pulse.vercel.app`)
-   - `NEXT_PUBLIC_SITE_NAME` (e.g. `AI Pulse`)
+   - `NEXT_PUBLIC_SITE_URL` (your Vercel URL, e.g. `https://zeropress.vercel.app`)
+   - `NEXT_PUBLIC_SITE_NAME` (e.g. `ZeroPress`)
 4. Deploy
 
 ### 4. Test the API
@@ -113,11 +113,11 @@ List published posts. Query params: `limit` (default 10), `tag` (filter by tag).
 
 ---
 
-## n8n Pipeline Update
+## n8n Pipeline Integration
 
-Replace the WordPress node (Node 28) in your pipeline with an HTTP Request node:
+Replace the WordPress node in your pipeline with an HTTP Request node:
 
-**Node 28 (replaces WordPress): HTTP Request → "Publish to Blog"**
+**HTTP Request → "Publish to Blog"**
 
 - Method: POST
 - URL: `https://your-site.vercel.app/api/posts`
@@ -126,7 +126,7 @@ Replace the WordPress node (Node 28) in your pipeline with an HTTP Request node:
   - Value: `Bearer YOUR_API_SECRET_KEY`
 - Body → JSON:
 
-```
+```json
 {
   "title": "{{ $json.headline }}",
   "slug": "{{ $json.slug }}",
@@ -142,12 +142,4 @@ Replace the WordPress node (Node 28) in your pipeline with an HTTP Request node:
 }
 ```
 
-The response contains a `link` field with the full post URL — this flows into the Inject Post URL node exactly like WordPress did.
-
-**Node 29 (Inject Post URL) — update this line:**
-
-```javascript
-const url = wp.link || '';  // The API returns { link: "https://..." }
-```
-
-Everything else in the pipeline stays the same.
+The response contains a `link` field with the full post URL.
