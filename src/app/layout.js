@@ -3,8 +3,8 @@ import AnimatedGradientText from '@/components/AnimatedGradientText';
 
 export const metadata = {
   title: {
-    default: process.env.NEXT_PUBLIC_SITE_NAME || 'AI Pulse',
-    template: `%s | ${process.env.NEXT_PUBLIC_SITE_NAME || 'AI Pulse'}`,
+    default: process.env.NEXT_PUBLIC_SITE_NAME || 'ZeroPress',
+    template: `%s | ${process.env.NEXT_PUBLIC_SITE_NAME || 'ZeroPress'}`,
   },
   description: process.env.NEXT_PUBLIC_SITE_DESCRIPTION || 'AI-generated insights on technology, machine learning, and the future.',
   icons: {
@@ -13,7 +13,7 @@ export const metadata = {
   },
   openGraph: {
     type: 'website',
-    siteName: process.env.NEXT_PUBLIC_SITE_NAME || 'AI Pulse',
+    siteName: process.env.NEXT_PUBLIC_SITE_NAME || 'ZeroPress',
   },
 };
 
@@ -32,7 +32,7 @@ export default function RootLayout({ children }) {
 }
 
 function Nav() {
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'AI Pulse';
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'ZeroPress';
   return (
     <nav style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
@@ -73,7 +73,7 @@ function Footer() {
       position: 'relative',
     }}>
       <p style={{ textAlign: 'center', width: '100%' }}>
-        &copy; {new Date().getFullYear()} {process.env.NEXT_PUBLIC_SITE_NAME || 'AI Pulse'}
+        &copy; {new Date().getFullYear()} {process.env.NEXT_PUBLIC_SITE_NAME || 'ZeroPress'}
       </p>
       <div className="footer-pill" style={{
         position: 'absolute',
