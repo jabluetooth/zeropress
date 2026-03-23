@@ -91,7 +91,7 @@ function DockItem({ mouseX, label, onClick, disabled, active }) {
         fontSize: '0.875rem', fontFamily: 'inherit', fontWeight: active ? 700 : 500,
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.35 : 1,
-        background: active ? 'var(--accent)' : 'transparent',
+        background: active ? 'var(--accent)' : 'rgba(232, 232, 240, 0)',
         color: active ? '#fff' : 'var(--text-secondary)',
         flexShrink: 0,
       }}
