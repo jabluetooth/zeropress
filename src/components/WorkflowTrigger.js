@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { triggerWorkflow } from '@/lib/workflow';
 
 export default function WorkflowTrigger() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -19,8 +21,13 @@ export default function WorkflowTrigger() {
         // Add any other data your workflow needs
       });
 
-      setMessage('Workflow triggered successfully!');
+      setMessage('Workflow triggered! Refreshing page...');
       console.log('Workflow result:', result);
+
+      // Wait a moment for the user to see the success message, then refresh
+      setTimeout(() => {
+        router.refresh();
+      }, 5000);
     } catch (error) {
       setMessage(`Error: ${error.message}`);
     } finally {
