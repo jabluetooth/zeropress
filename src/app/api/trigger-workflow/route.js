@@ -13,6 +13,9 @@ export async function POST(request) {
     }
 
     // Trigger the n8n workflow
+    console.log('Triggering n8n webhook:', webhookUrl);
+    console.log('Payload:', body);
+
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
@@ -21,11 +24,24 @@ export async function POST(request) {
       body: JSON.stringify(body),
     });
 
+    console.log('n8n response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`n8n webhook failed with status ${response.status}`);
+      const errorText = await response.text();
+      console.error('n8n error response:', errorText);
+      throw new Error(`n8n webhook failed with status ${response.status}: ${errorText}`);
     }
 
-    const data = await response.json();
+    // Try to parse response as JSON, but handle cases where it might not be
+    let data;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      data = await response.text();
+    }
+
+    console.log('n8n response:', data);
 
     return NextResponse.json({
       success: true,
