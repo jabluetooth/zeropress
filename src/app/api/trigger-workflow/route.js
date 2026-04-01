@@ -4,6 +4,7 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const webhookUrl = process.env.N8N_WEBHOOK_URL;
+    const bearerToken = process.env.N8N_BEARER_TOKEN;
 
     if (!webhookUrl) {
       return NextResponse.json(
@@ -12,15 +13,24 @@ export async function POST(request) {
       );
     }
 
+    // Build headers
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+
+    // Add Bearer token if configured
+    if (bearerToken) {
+      headers['Authorization'] = `Bearer ${bearerToken}`;
+    }
+
     // Trigger the n8n workflow
     console.log('Triggering n8n webhook:', webhookUrl);
     console.log('Payload:', body);
+    console.log('Has Bearer token:', !!bearerToken);
 
     const response = await fetch(webhookUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(body),
     });
 

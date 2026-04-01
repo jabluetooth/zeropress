@@ -29,17 +29,27 @@ export default function WorkflowTrigger() {
   };
 
   return (
-    <div className="p-4">
+    <div>
       <button
         onClick={handleTrigger}
         disabled={isLoading}
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="btn-primary"
+        style={{
+          width: '100%',
+          justifyContent: 'center',
+          cursor: isLoading ? 'not-allowed' : 'pointer',
+          opacity: isLoading ? 0.6 : 1,
+        }}
       >
-        {isLoading ? 'Triggering...' : 'Trigger n8n Workflow'}
+        {isLoading ? 'Generating...' : 'Generate New Post'}
       </button>
 
       {message && (
-        <p className={`mt-2 ${message.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}>
+        <p style={{
+          marginTop: '12px',
+          fontSize: '0.8rem',
+          color: message.startsWith('Error') ? '#ef4444' : '#22c55e',
+        }}>
           {message}
         </p>
       )}

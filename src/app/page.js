@@ -3,6 +3,7 @@ import PostGrid from '@/components/PostGrid';
 import NewsletterForm from '@/components/NewsletterForm';
 import TopicsSearch from '@/components/TopicsSearch';
 import SpotlightHero from '@/components/SpotlightHero';
+import WorkflowTrigger from '@/components/WorkflowTrigger';
 
 export const revalidate = 60;
 
@@ -116,18 +117,29 @@ export default async function HomePage() {
         {/* Sidebar */}
         <aside className="sidebar">
           {/* Newsletter */}
-          <div className="card" style={{ padding: '28px 24px', marginBottom: 24 }}>
+          <div className="card-dark" style={{ padding: '28px 24px', marginBottom: 24 }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 8 }}>
               🔔 Stay in the loop
             </h3>
-            <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', marginBottom: 16 }}>
+            <p style={{ fontSize: '0.825rem', marginBottom: 16 }}>
               Get the latest AI insights delivered to your inbox. No spam, unsubscribe anytime.
             </p>
             <NewsletterForm />
           </div>
 
+          {/* Workflow Trigger */}
+          <div className="card-dark" style={{ padding: '28px 24px', marginBottom: 24 }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 8 }}>
+              🤖 Generate Content
+            </h3>
+            <p style={{ fontSize: '0.825rem', marginBottom: 16 }}>
+              Trigger the AI workflow to generate a new blog post.
+            </p>
+            <WorkflowTrigger />
+          </div>
+
           {/* Topics */}
-          <div className="card" style={{ padding: '28px 24px' }}>
+          <div className="card-dark" style={{ padding: '28px 24px' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 16 }}>
               Topics
             </h3>

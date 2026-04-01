@@ -76,6 +76,68 @@ a:hover {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
 }
 
+/* Dark card for sidebar */
+.card-dark {
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.card-dark:hover {
+  background: #1f1f23;
+  border-color: #3f3f46;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+.card-dark h3 {
+  color: #fafafa;
+}
+.card-dark p {
+  color: #a1a1aa;
+}
+.card-dark .newsletter-input {
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  color: #fafafa;
+}
+.card-dark .newsletter-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.2);
+}
+.card-dark .newsletter-input::placeholder {
+  color: #71717a;
+}
+.card-dark button {
+  background: var(--accent);
+  color: white;
+}
+.card-dark button:hover {
+  opacity: 0.9;
+}
+.card-dark .tag {
+  background: rgba(8, 145, 178, 0.15);
+  color: #67e8f9;
+  border: 1px solid rgba(8, 145, 178, 0.3);
+}
+.card-dark .tag:hover {
+  background: var(--accent);
+  color: white;
+}
+.card-dark input[type="text"],
+.card-dark input[type="email"] {
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  color: #fafafa;
+}
+.card-dark input[type="text"]:focus,
+.card-dark input[type="email"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.2);
+}
+.card-dark input::placeholder {
+  color: #71717a;
+}
+
 /* Tag pill */
 .tag {
   display: inline-block;
