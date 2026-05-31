@@ -1,62 +1,44 @@
 'use client';
-
-import { useState, useEffect } from 'react';
-
-const MOBILE_LIMIT = 3;
+import { useState } from 'react';
 
 export default function TopicsSearch({ tags }) {
   const [query, setQuery] = useState('');
-  const [isMobile, setIsMobile] = useState(false);
-  const [showAll, setShowAll] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 640px)');
-    const handle = (e) => setIsMobile(e.matches);
-    handle(mq);
-    mq.addEventListener('change', handle);
-    return () => mq.removeEventListener('change', handle);
-  }, []);
 
   const filtered = query.trim()
     ? tags.filter(([tag]) => tag.toLowerCase().includes(query.toLowerCase()))
     : tags;
 
-  const visible = isMobile && !showAll ? filtered.slice(0, MOBILE_LIMIT) : filtered;
-  const hasMore = isMobile && filtered.length > MOBILE_LIMIT;
-
   return (
     <div>
       <input
         type="text"
-        placeholder="Search topics..."
+        placeholder="Filter topics…"
         value={query}
-        onChange={e => { setQuery(e.target.value); setShowAll(false); }}
-        className="newsletter-input"
-        style={{ marginBottom: 14 }}
+        onChange={e => setQuery(e.target.value)}
+        style={{
+          width: '100%', height: 36, padding: '0 12px',
+          borderRadius: 'var(--r-pill)', border: '1px solid var(--line)',
+          background: 'var(--surface-2)', fontFamily: 'var(--font)', fontSize: '0.85rem',
+          color: 'var(--ink)', outline: 'none', marginBottom: 14,
+          transition: 'border-color .18s, box-shadow .18s',
+        }}
+        onFocus={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.boxShadow = '0 0 0 3px var(--accent-tint)'; }}
+        onBlur={e => { e.target.style.borderColor = 'var(--line)'; e.target.style.boxShadow = 'none'; }}
       />
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      <div className="topics" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {filtered.length === 0 ? (
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No topics found.</p>
+          <p style={{ fontSize: '0.8rem', color: 'var(--ink-3)' }}>No topics found.</p>
         ) : (
-          visible.map(([tag, count]) => (
-            <a key={tag} href={`/tag/${tag.toLowerCase()}`} className="tag" style={{ textDecoration: 'none' }}>
+          filtered.map(([tag, count]) => (
+            <a key={tag} href={`/tag/${tag.toLowerCase()}`} className="chip">
               {tag}
-              <span style={{ opacity: 0.5, marginLeft: 4, fontSize: '0.7em' }}>{count}</span>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: '0.68rem', color: 'var(--ink-3)' }}>
+                {count}
+              </span>
             </a>
           ))
         )}
       </div>
-      {hasMore && (
-        <button
-          onClick={() => setShowAll(v => !v)}
-          style={{
-            marginTop: 10, background: 'none', border: 'none', cursor: 'pointer',
-            fontSize: '0.75rem', color: 'var(--accent)', fontFamily: 'inherit', fontWeight: 500, padding: 0,
-          }}
-        >
-          {showAll ? 'Show less' : `Show all ${filtered.length} topics`}
-        </button>
-      )}
     </div>
   );
 }

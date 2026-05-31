@@ -25,7 +25,9 @@
       "WebFetch(domain:ui.aceternity.com)",
       "Bash(git remote set-url:*)",
       "Bash(git pull:*)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(Get-ChildItem -Path \"e:\\\\Projects\\\\ZeroPress\" -Recurse -Exclude node_modules,.next,UIUX -Filter \"*.tsx\" -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object -ExpandProperty FullName)"
     ]
   }
 }

@@ -1,12 +1,11 @@
 import './globals.css';
-import AnimatedGradientText from '@/components/AnimatedGradientText';
 
 export const metadata = {
   title: {
     default: process.env.NEXT_PUBLIC_SITE_NAME || 'ZeroPress',
     template: `%s | ${process.env.NEXT_PUBLIC_SITE_NAME || 'ZeroPress'}`,
   },
-  description: process.env.NEXT_PUBLIC_SITE_DESCRIPTION || 'AI-generated insights on technology, machine learning, and the future.',
+  description: process.env.NEXT_PUBLIC_SITE_DESCRIPTION || 'Deep dives, field notes, and honest analysis on models, inference, and the craft of building with AI.',
   icons: {
     icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
     shortcut: '/favicon.svg',
@@ -20,9 +19,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="noise">
+      <body>
         <Nav />
-        <main style={{ minHeight: '100vh', paddingTop: '72px' }}>
+        <main style={{ paddingTop: 66 }}>
           {children}
         </main>
         <Footer />
@@ -32,28 +31,31 @@ export default function RootLayout({ children }) {
 }
 
 function Nav() {
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'ZeroPress';
   return (
-    <nav style={{
-      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-      background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(16px)',
-      borderBottom: '1px solid var(--border)',
-    }}>
-      <div style={{
-        maxWidth: 1100, margin: '0 auto', padding: '0 24px',
-        height: 72, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
-        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 2, textDecoration: 'none' }}>
-          <img src="/logo.svg" alt="ZeroPress logo" style={{ width: 24, height: 24 }} />
-          <span style={{
-            fontWeight: 700, fontSize: '1.15rem', color: 'var(--text-primary)',
-            letterSpacing: '-0.02em',
-          }}>
-            {siteName}
-          </span>
+    <nav className="zp-nav">
+      <div className="zp-nav__inner">
+        {/* Logo */}
+        <a className="zp-logo" href="/">
+          <span className="zp-logo__mark">Z</span>
+          <span className="zp-logo__word">Zero<b>Press</b></span>
         </a>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-          <a href="/" style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Home</a>
+
+        {/* Links */}
+        <div className="zp-nav__links">
+          <a className="zp-nav__link" href="/">Latest</a>
+          <a className="zp-nav__link" href="#">About</a>
+        </div>
+
+        {/* Right side */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span className="ai-badge">
+            <span className="dot" />
+            AI&nbsp;pipeline
+          </span>
+          <span className="zp-search">
+            Search
+            <kbd>⌘K</kbd>
+          </span>
         </div>
       </div>
     </nav>
@@ -61,38 +63,55 @@ function Nav() {
 }
 
 function Footer() {
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'ZeroPress';
   return (
-    <footer style={{
-      borderTop: '1px solid var(--border)',
-      padding: '20px 24px',
-      color: 'var(--text-muted)',
-      fontSize: '0.75rem',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      position: 'relative',
-    }}>
-      <p style={{ textAlign: 'center', width: '100%' }}>
-        &copy; {new Date().getFullYear()} {process.env.NEXT_PUBLIC_SITE_NAME || 'ZeroPress'}
-      </p>
-      <div className="footer-pill" style={{
-        position: 'absolute',
-        right: 24,
-        top: '50%',
-        transform: 'translateY(-50%)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-        fontSize: '0.7rem',
-        fontWeight: 600,
-        letterSpacing: '0.05em',
-        background: 'var(--bg-secondary)',
-        border: '1px solid var(--border)',
-        borderRadius: 9999,
-        padding: '4px 10px',
+    <footer className="zp-footer">
+      <div className="zp-footer__inner">
+        {/* About col */}
+        <div className="zp-footer__col" style={{ maxWidth: 300 }}>
+          <a className="zp-logo" href="/" style={{ marginBottom: 4 }}>
+            <span className="zp-logo__mark">Z</span>
+            <span className="zp-logo__word">Zero<b>Press</b></span>
+          </a>
+          <p style={{ color: 'var(--ink-2)', fontSize: '0.86rem', lineHeight: 1.6 }}>
+            Notes on machine learning, inference, and the craft of shipping AI products.
+            Researched, drafted, and published by an automated pipeline — edited for taste.
+          </p>
+          <span className="ai-badge" style={{ marginTop: 6, alignSelf: 'flex-start' }}>
+            <span className="dot" />
+            Published by an AI pipeline
+          </span>
+        </div>
+
+        {/* Sections */}
+        <div className="zp-footer__col">
+          <span className="eyebrow" style={{ marginBottom: 4 }}>Sections</span>
+          <a href="/">Latest</a>
+          <a href="#">Topics</a>
+        </div>
+
+        {/* Pipeline */}
+        <div className="zp-footer__col">
+          <span className="eyebrow" style={{ marginBottom: 4 }}>Pipeline</span>
+          <a href="#">How posts are made</a>
+          <a href="#">Editorial policy</a>
+          <a href="#">RSS feed</a>
+        </div>
+      </div>
+
+      {/* Bottom bar */}
+      <div className="wrap" style={{
+        paddingTop: 18, paddingBottom: 26,
+        borderTop: '1px solid var(--line)',
+        display: 'flex', justifyContent: 'space-between',
+        gap: 12, flexWrap: 'wrap',
       }}>
-        <div className="pulse-dot" style={{ width: 6, height: 6 }} />
-        <AnimatedGradientText>AI-powered</AnimatedGradientText>
+        <span style={{ fontSize: '0.78rem', color: 'var(--ink-3)' }}>
+          © {new Date().getFullYear()} {siteName}
+        </span>
+        <span style={{ fontSize: '0.78rem', color: 'var(--ink-3)' }}>
+          Built on Next.js · Supabase · Vercel
+        </span>
       </div>
     </footer>
   );

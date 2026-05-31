@@ -1,22 +1,11 @@
 import { supabase } from '@/lib/supabase';
 import { parseHeadings } from '@/lib/parseHeadings';
+import { getCoverClass, getKicker, getReadTime, formatDate, toPublicUrl } from '@/lib/utils';
 import TableOfContents from '@/components/TableOfContents';
+import ReadingProgress from '@/components/ReadingProgress';
 import { notFound } from 'next/navigation';
 
 export const revalidate = 60;
-
-const SUPABASE_URL = 'https://qvhlprtppakttxseqkgh.supabase.co';
-function toPublicUrl(url) {
-  if (!url) return null;
-  if (url.startsWith('http') && url.includes('/object/public/')) return url;
-  if (url.startsWith('http') && url.includes('/storage/v1/object/')) {
-    return url.replace('/storage/v1/object/', '/storage/v1/object/public/');
-  }
-  if (!url.startsWith('http')) {
-    return `${SUPABASE_URL}/storage/v1/object/public/${url}`;
-  }
-  return url;
-}
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -26,9 +15,7 @@ export async function generateMetadata({ params }) {
     .eq('slug', slug)
     .eq('status', 'published')
     .single();
-
   if (!post) return { title: 'Not Found' };
-
   return {
     title: post.title,
     description: post.meta_description || post.excerpt,
@@ -51,94 +38,138 @@ export default async function PostPage({ params }) {
 
   if (error || !post) notFound();
 
-  const readTime = post.reading_time || Math.ceil((post.word_count || 0) / 250);
-  const date = post.published_at
-    ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-    : '';
-
   const { headings, modifiedHtml } = parseHeadings(post.body_html || '');
 
-  return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px' }} className="fade-in">
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: headings.length ? '1fr 220px' : '1fr',
-        gap: 48,
-        alignItems: 'start',
-      }}>
+  const readTime = getReadTime(post);
+  const date = formatDate(post.published_at);
+  const coverClass = getCoverClass(post);
+  const kicker = getKicker(post);
+  const imgSrc = toPublicUrl(post.featured_image_url);
 
-        {/* Main article */}
-        <article>
-          {/* Tags */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+  // Related posts: same tag, different slug
+  const { data: relatedRaw } = await supabase
+    .from('posts')
+    .select('id, title, slug, excerpt, tags, featured_image_url, published_at, reading_time, word_count')
+    .eq('status', 'published')
+    .neq('slug', slug)
+    .order('published_at', { ascending: false })
+    .limit(20);
+
+  const postTags = post.tags || [];
+  const related = (relatedRaw || [])
+    .filter(p => (p.tags || []).some(t => postTags.includes(t)))
+    .slice(0, 3);
+  const relPosts = related.length >= 3 ? related : (relatedRaw || []).slice(0, 3);
+
+  return (
+    <>
+      <ReadingProgress />
+
+      <article className="art fade-up">
+        {/* Header */}
+        <header className="art__head">
+          <div className="art__tags">
             {(post.tags || []).map(tag => (
-              <a key={tag} href={`/tag/${tag}`} className="tag">{tag}</a>
+              <a key={tag} href={`/tag/${tag.toLowerCase()}`} className="chip">{tag}</a>
             ))}
           </div>
-
-          {/* Title */}
-          <h1 style={{
-            fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
-            fontWeight: 800, letterSpacing: '-0.03em',
-            lineHeight: 1.15, marginBottom: 20,
-            color: 'var(--text-primary)',
-          }}>
-            {post.title}
-          </h1>
-
-          {/* Meta */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 16,
-            fontSize: '0.85rem', color: 'var(--text-muted)',
-            marginBottom: 32, paddingBottom: 32,
-            borderBottom: '1px solid var(--border)',
-          }}>
-            <span>{date}</span>
-            <span>&middot;</span>
-            <span>{readTime} min read</span>
-            <span>&middot;</span>
-            <span>{post.word_count?.toLocaleString()} words</span>
-          </div>
-
-          {/* Featured image */}
-          {post.featured_image_url && (
-            <img
-              src={toPublicUrl(post.featured_image_url)}
-              alt={post.title}
-              style={{
-                width: '100%',
-                height: 'auto',
-                maxHeight: 480,
-                objectFit: 'cover',
-                borderRadius: 12,
-                marginBottom: 40,
-                display: 'block',
-                border: '1px solid var(--border)',
-              }}
-            />
+          <h1 className="art__title">{post.title}</h1>
+          {post.excerpt && (
+            <p className="art__dek">{post.excerpt}</p>
           )}
-
-          {/* Body */}
-          <div
-            className="prose-custom"
-            dangerouslySetInnerHTML={{ __html: modifiedHtml }}
-          />
-
-          {/* Bottom nav */}
-          <div style={{
-            marginTop: 64, paddingTop: 32,
-            borderTop: '1px solid var(--border)',
-            textAlign: 'center',
-          }}>
-            <a href="/" className="btn-primary">
-              ← Back to all posts
-            </a>
+          <div className="byline">
+            <span className="who">
+              <span className="av">Z</span>
+              ZeroPress Pipeline
+            </span>
+            <span className="dot-sep" />
+            <span>{date}</span>
+            <span className="dot-sep" />
+            <span>{readTime} min read</span>
+            {post.word_count > 0 && (
+              <>
+                <span className="dot-sep" />
+                <span>{post.word_count?.toLocaleString()} words</span>
+              </>
+            )}
           </div>
-        </article>
+        </header>
 
-        {/* TOC sidebar */}
-        {headings.length > 0 && <TableOfContents headings={headings} />}
-      </div>
-    </div>
+        {/* Cover art */}
+        <div className={`cover ${coverClass} art__cover`}>
+          {imgSrc && <img src={imgSrc} alt={post.title} />}
+          <span className="cover__tag">{kicker}</span>
+        </div>
+
+        {/* Article grid: prose + TOC */}
+        <div className={headings.length ? 'art__grid' : undefined}>
+          <div className="prose-custom" dangerouslySetInnerHTML={{ __html: modifiedHtml }} />
+          {headings.length > 0 && <TableOfContents headings={headings} />}
+        </div>
+
+        {/* AI note */}
+        <div className="ainote" style={{ marginTop: 40 }}>
+          <span className="ic">Z</span>
+          <p>
+            <strong>How this post was made.</strong> ZeroPress drafts each piece with an automated
+            research-and-write pipeline, then a human editor checks the claims and trims the slop.
+          </p>
+        </div>
+
+        {/* End bar */}
+        <div className="endbar">
+          <div className="endbar__tags">
+            <span style={{ fontFamily: 'var(--mono)', fontSize: '0.74rem', color: 'var(--ink-3)', marginRight: 4 }}>
+              Filed under
+            </span>
+            {(post.tags || []).map(tag => (
+              <a key={tag} href={`/tag/${tag.toLowerCase()}`} className="chip chip--accent">{tag}</a>
+            ))}
+          </div>
+          <a className="btn btn--ghost" href="/">← All posts</a>
+        </div>
+      </article>
+
+      {/* Related */}
+      {relPosts.length > 0 && (
+        <section className="related">
+          <div className="related__inner">
+            <div className="section-head" style={{ borderColor: 'var(--line-2)' }}>
+              <span className="eyebrow">Keep reading</span>
+              <span className="count">related by topic</span>
+            </div>
+            <div className="rel-grid">
+              {relPosts.map((p, i) => {
+                const rc = getCoverClass(p, i);
+                const ri = toPublicUrl(p.featured_image_url);
+                return (
+                  <article key={p.id} className="card">
+                    <div className={`cover ${rc}`} style={{ height: 150 }}>
+                      {ri && <img src={ri} alt="" loading="lazy" />}
+                      <span className="cover__tag">{getKicker(p)}</span>
+                    </div>
+                    <div className="card__body">
+                      <div className="card__tags">
+                        {(p.tags || []).slice(0, 2).map(t => (
+                          <a key={t} href={`/tag/${t.toLowerCase()}`} className="chip">{t}</a>
+                        ))}
+                      </div>
+                      <h3 className="card__title" style={{ fontSize: '1.05rem' }}>
+                        <a className="card__link" href={`/post/${p.slug}`}>{p.title}</a>
+                      </h3>
+                      <div className="card__meta">
+                        <span>{getReadTime(p)} min</span>
+                        <span className="dot-sep" />
+                        <span>{formatDate(p.published_at)}</span>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+    </>
   );
 }
