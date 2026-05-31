@@ -24,7 +24,8 @@
       "Bash(npm install:*)",
       "WebFetch(domain:ui.aceternity.com)",
       "Bash(git remote set-url:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(git stash *)"
     ]
   }
 }
