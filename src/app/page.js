@@ -13,7 +13,7 @@ async function getPosts() {
     .eq('status', 'published')
     .order('published_at', { ascending: false })
     .limit(20);
-  if (error) { console.error('Supabase error:', error); return []; }
+  if (error) { console.error('Supabase error:', error.message, error.code, error.details); return []; }
   return data || [];
 }
 
