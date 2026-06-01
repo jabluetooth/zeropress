@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
+    // Authenticate — same API_SECRET_KEY used by the posts route
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    if (!token || token !== process.env.API_SECRET_KEY) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const webhookUrl = process.env.N8N_WEBHOOK_URL;
     const bearerToken = process.env.N8N_BEARER_TOKEN;
@@ -13,20 +20,10 @@ export async function POST(request) {
       );
     }
 
-    // Build headers
-    const headers = {
-      'Content-Type': 'application/json',
-    };
-
-    // Add Bearer token if configured
+    const headers = { 'Content-Type': 'application/json' };
     if (bearerToken) {
       headers['Authorization'] = `Bearer ${bearerToken}`;
     }
-
-    // Trigger the n8n workflow
-    console.log('Triggering n8n webhook:', webhookUrl);
-    console.log('Payload:', body);
-    console.log('Has Bearer token:', !!bearerToken);
 
     const response = await fetch(webhookUrl, {
       method: 'POST',
@@ -34,35 +31,20 @@ export async function POST(request) {
       body: JSON.stringify(body),
     });
 
-    console.log('n8n response status:', response.status);
-
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('n8n error response:', errorText);
-      throw new Error(`n8n webhook failed with status ${response.status}: ${errorText}`);
+      console.error('n8n webhook failed:', response.status);
+      throw new Error(`n8n webhook failed with status ${response.status}`);
     }
 
-    // Try to parse response as JSON, but handle cases where it might not be
-    let data;
     const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      data = await response.json();
-    } else {
-      data = await response.text();
-    }
+    const data = contentType?.includes('application/json')
+      ? await response.json()
+      : await response.text();
 
-    console.log('n8n response:', data);
-
-    return NextResponse.json({
-      success: true,
-      message: 'Workflow triggered successfully',
-      data,
-    });
+    return NextResponse.json({ success: true, message: 'Workflow triggered successfully', data });
   } catch (error) {
-    console.error('Error triggering n8n workflow:', error);
-    return NextResponse.json(
-      { error: 'Failed to trigger workflow', details: error.message },
-      { status: 500 }
-    );
+    console.error('Error triggering n8n workflow:', error.message);
+    return NextResponse.json({ error: 'Failed to trigger workflow' }, { status: 500 });
   }
 }

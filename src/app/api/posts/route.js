@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getServiceClient } from '@/lib/supabase';
+import { supabase, getServiceClient } from '@/lib/supabase';
 
 // POST /api/posts — n8n calls this to create a new post
 // PUT  /api/posts — n8n calls this to update an existing post by slug
@@ -80,10 +80,10 @@ export async function POST(request) {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const rawLimit = parseInt(searchParams.get('limit') || '10', 10);
+    const limit = Number.isNaN(rawLimit) ? 10 : Math.min(Math.max(rawLimit, 1), 100);
     const tag = searchParams.get('tag');
 
-    const supabase = getServiceClient();
     let query = supabase
       .from('posts')
       .select('id, title, slug, excerpt, tags, featured_image_url, published_at, reading_time')

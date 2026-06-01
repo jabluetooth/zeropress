@@ -1,5 +1,4 @@
-export const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qvhlprtppakttxseqkgh.supabase.co';
+export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 
 export function toPublicUrl(url) {
   if (!url) return null;

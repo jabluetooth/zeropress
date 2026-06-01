@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { triggerWorkflow } from '@/lib/workflow';
 
@@ -8,24 +8,27 @@ export default function WorkflowTrigger() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   const handleTrigger = async () => {
     setIsLoading(true);
     setMessage('');
 
     try {
-      // You can pass any data you want to send to your n8n workflow
       const result = await triggerWorkflow({
         action: 'generate-post',
         timestamp: new Date().toISOString(),
-        // Add any other data your workflow needs
       });
 
       setMessage('Workflow triggered! Refreshing page...');
-      console.log('Workflow result:', result);
 
-      // Wait a moment for the user to see the success message, then refresh
-      setTimeout(() => {
+      timerRef.current = setTimeout(() => {
         router.refresh();
       }, 5000);
     } catch (error) {
