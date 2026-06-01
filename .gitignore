@@ -7,6 +7,6 @@ node_modules/
 out/
 error.md
 UIUX/
-*.json.bak
+*.bak
 ZeroPress.json
 

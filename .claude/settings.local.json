@@ -31,7 +31,10 @@
       "Bash(npx next *)",
       "Bash(Start-Sleep -Seconds 8)",
       "Bash(Get-Content \"C:\\\\Users\\\\FRELAT~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-frelatorre-Desktop-Projects-n8n-BLOG-CRM\\\\653f06cf-c3c6-463e-8fa8-77a043b14125\\\\tasks\\\\b551h95jx.output\" -Tail 40)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(node scripts/rotate-secrets.js --preview)",
+      "Bash(node scripts/generate-key.js)",
+      "Bash(node scripts/generate-key.js zp_admin_)"
     ]
   }
 }

@@ -6,7 +6,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "generate-key": "node scripts/generate-key.js",
+    "rotate-secrets": "node scripts/rotate-secrets.js",
+    "rotate-secrets:api": "node scripts/rotate-secrets.js --api",
+    "rotate-secrets:admin": "node scripts/rotate-secrets.js --admin",
+    "rotate-secrets:preview": "node scripts/rotate-secrets.js --preview"
   },
   "keywords": [],
   "author": "",
