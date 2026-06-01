@@ -1,75 +1,225 @@
-# ZeroPress — AI-Powered Blog
+# ZeroPress — Zero-Touch AI Publishing Platform
 
-A Next.js blog with a Supabase backend, designed to receive content from an automated n8n AI pipeline. Clean, minimal design. Hosted free on Vercel.
+> An end-to-end automated content pipeline that researches trending topics, writes SEO-optimized blog posts, generates cover images, publishes to a custom Next.js site, distributes newsletters, and logs performance — with zero human intervention.
 
-## Stack
+**Built by Fil Heinz O. Re La Torre**
 
-- **Next.js 15** — App Router, ISR (revalidates every 60s)
-- **Supabase** — Postgres database for posts + subscribers
-- **Framer Motion** — Smooth animations
-- **Vercel** — Free hosting with auto-deploy
+**Live:** [zeropressv1.vercel.app](https://zeropressv1.vercel.app)
 
-## Quick Start
+---
 
-### 1. Supabase Setup
+## Overview
 
-1. Go to [supabase.com](https://supabase.com) and create a free project
-2. Open the **SQL Editor** and run the contents of `supabase-schema.sql`
-3. Go to **Settings → API** and copy:
-   - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
-   - `anon` public key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `service_role` secret key → `SUPABASE_SERVICE_ROLE_KEY`
+ZeroPress is a production-grade, fully automated publishing system. Every 6 hours (or on-demand via a secure admin panel), the n8n pipeline:
 
-### 2. Local Development
+1. Scans 4 independent data sources for trending AI topics
+2. Scores and ranks candidates with a deduplication engine
+3. Selects the best topic using an LLM with brand safety gating
+4. Researches it with 3 parallel live Google Search queries
+5. Writes a 1,500–2,500 word SEO article in HTML
+6. Generates a custom cover image via Hugging Face FLUX.1-schnell
+7. Publishes to this Next.js site via an authenticated REST API
+8. Emails all active subscribers via Brevo
+9. Logs every run to Google Sheets for analytics
+
+**Total infrastructure cost: $0/month** — built entirely on free tiers.
+
+---
+
+## Pipeline Architecture
+
+```
+Webhook / Schedule Trigger (every 6 hrs)
+              │
+              ▼
+     Pipeline Config Node
+     (niche · voice · thresholds)
+              │
+   ┌──────────┼──────────┬──────────┐
+   ▼          ▼          ▼          ▼
+ Reddit      RSS      G.Trends   Mastodon
+   └──────────┴──────────┴──────────┘
+              │
+              ▼
+    Merge → Dedup → Rank  (top 15)
+              │
+              ▼
+   Groq LLM — Topic Selection
+     + Brand Safety Gate
+              │
+     ┌────────┼────────┐
+     ▼        ▼        ▼
+  SERP #1  SERP #2  SERP #3
+     └────────┴────────┘
+              │
+              ▼
+    Aggregate Research (20 items)
+              │
+     ┌────────┼────────┐
+     ▼        ▼        ▼
+  Blog Post  Social  FLUX Image
+  (Groq)    (Groq)   (HuggingFace)
+     └────────┴────────┘
+              │
+     Duplicate Check (Supabase)
+              │
+     Publish to ZeroPress API
+              │
+         Inject Post URL
+              │
+     ┌────────┴────────┐
+     ▼                 ▼
+  Newsletter        Log Run
+  (Brevo)       (Google Sheets)
+```
+
+**37 nodes · 4 data sources · 3 AI models · 6 integrations**
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Orchestration | n8n (self-hosted) |
+| LLM | Groq · Llama 3.3 70B |
+| Image generation | Hugging Face · FLUX.1-schnell |
+| Research | SerpAPI (Google Search + Trends) |
+| Data sources | RSS, Reddit, Mastodon, Google Trends |
+| Database | Supabase (PostgreSQL + RLS) |
+| Storage | Supabase Storage |
+| Frontend | Next.js 15 (App Router + ISR) |
+| Hosting | Vercel (Edge Network) |
+| Email | Brevo Transactional API |
+| Analytics logging | Google Sheets |
+| Styling | Tailwind CSS v4 |
+
+---
+
+## Frontend Features
+
+| Feature | Description |
+|---|---|
+| Blog feed | ISR (60s revalidation), featured hero, bento grid |
+| Post pages | Auto table of contents, reading progress bar, related posts |
+| Tag system | Per-tag archive pages with co-occurring tag cloud |
+| Search | Live Supabase search modal — open with ⌘K, keyboard navigable |
+| Newsletter | Subscriber signup with re-subscribe support |
+| Admin panel | Password-protected pipeline trigger at `/admin` |
+| About page | Full pipeline documentation |
+
+---
+
+## Security
+
+- All write API routes protected with Bearer token authentication
+- Admin panel uses a dedicated `ADMIN_SECRET` separate from the n8n API key
+- Rate limiting on admin auth endpoint (5 attempts / 15 min per IP)
+- Timing-safe password comparison via `crypto.timingSafeEqual`
+- Admin session stored in `sessionStorage` — cleared on tab close
+- Supabase service role key is server-only, never exposed to the client
+- Public reads use the anon client with Row Level Security enforced
+- Image `remotePatterns` restricted to `*.supabase.co`
+- `/admin` excluded from search engine indexing via `robots.txt`
+
+---
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── page.js                  # Home feed
+│   ├── about/page.js            # Pipeline documentation
+│   ├── post/[slug]/page.js      # Article page
+│   ├── tag/[tag]/page.js        # Tag archive
+│   ├── admin/page.js            # Protected pipeline trigger
+│   └── api/
+│       ├── posts/route.js       # POST/GET posts (n8n integration)
+│       ├── newsletter/route.js  # Subscriber signup
+│       ├── trigger-workflow/    # Proxy trigger to n8n webhook
+│       └── admin/verify/        # Auth endpoint (rate-limited)
+├── components/
+│   ├── SearchModal.js           # Live search (⌘K)
+│   ├── NewsletterForm.js        # Email signup form
+│   ├── TableOfContents.js       # Auto-generated from post headings
+│   ├── ReadingProgress.js       # Scroll progress bar
+│   ├── PostGrid.js              # Bento grid layout
+│   └── PostCard.js
+└── lib/
+    ├── supabase.js              # Anon + service role clients
+    ├── utils.js                 # Date, cover, reading time helpers
+    └── parseHeadings.js         # HTML heading ID extractor
+scripts/
+├── generate-key.js              # Generate a cryptographically secure key
+└── rotate-secrets.js            # Rotate secrets and update .env
+```
+
+---
+
+## Environment Variables
 
 ```bash
-cp .env.local.example .env.local
-# Fill in your Supabase keys and a random API_SECRET_KEY
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# API auth — used by n8n to publish posts
+API_SECRET_KEY=
+
+# Admin panel — separate from API key
+ADMIN_SECRET=
+
+# n8n webhook
+N8N_WEBHOOK_URL=
+N8N_BEARER_TOKEN=
+
+# Site metadata
+NEXT_PUBLIC_SITE_URL=
+NEXT_PUBLIC_SITE_NAME=
+NEXT_PUBLIC_SITE_DESCRIPTION=
+```
+
+---
+
+## Local Setup
+
+```bash
+git clone https://github.com/jabluetooth/zeropress.git
+cd zeropress
 npm install
+
+# Copy env template and fill in your keys
+cp .env.example .env
+
 npm run dev
+# → http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+---
 
-### 3. Deploy to Vercel
+## Scripts
 
-1. Push to GitHub
-2. Go to [vercel.com](https://vercel.com), import the repo
-3. Add these environment variables in Vercel project settings:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `API_SECRET_KEY` (same random string you use in n8n)
-   - `NEXT_PUBLIC_SITE_URL` (your Vercel URL, e.g. `https://zeropress.vercel.app`)
-   - `NEXT_PUBLIC_SITE_NAME` (e.g. `ZeroPress`)
-4. Deploy
-
-### 4. Test the API
-
-Create a test post:
 ```bash
-curl -X POST https://your-site.vercel.app/api/posts \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_API_SECRET_KEY" \
-  -d '{
-    "title": "Test Post",
-    "slug": "test-post",
-    "body_html": "<article><h2>Hello World</h2><p>This is a test post.</p></article>",
-    "excerpt": "A test post from the API.",
-    "tags": ["test", "ai"],
-    "status": "published"
-  }'
+# Generate a new cryptographically secure API key
+npm run generate-key
+
+# Rotate all secrets in .env (backs up to .env.bak first)
+npm run rotate-secrets            # rotate everything
+npm run rotate-secrets:api        # rotate API_SECRET_KEY + N8N_BEARER_TOKEN
+npm run rotate-secrets:admin      # rotate ADMIN_SECRET only
+npm run rotate-secrets:preview    # preview new keys without writing
 ```
+
+---
 
 ## API Reference
 
-### POST /api/posts
+### `POST /api/posts`
+Creates or updates a post (upserts by slug). Called by n8n after content generation.
 
-Creates or updates a blog post (upserts by slug). This is what n8n calls.
-
-**Headers:**
-- `Authorization: Bearer YOUR_API_SECRET_KEY`
-- `Content-Type: application/json`
+**Headers:** `Authorization: Bearer <API_SECRET_KEY>`
 
 **Body:**
 ```json
@@ -78,68 +228,52 @@ Creates or updates a blog post (upserts by slug). This is what n8n calls.
   "slug": "post-slug",
   "body_html": "<article>...</article>",
   "excerpt": "Short summary",
-  "meta_description": "SEO description",
+  "meta_description": "SEO description (max 155 chars)",
   "featured_image_url": "https://...",
-  "tags": ["ai", "machine-learning"],
+  "tags": ["ai", "llm"],
   "status": "published",
   "word_count": 2000,
-  "primary_keyword": "ai",
-  "run_id": "run_123",
+  "primary_keyword": "llm",
+  "run_id": "run_1234567890",
   "interest_score": 75
 }
 ```
 
-**Response (201):**
+**Response `201`:**
 ```json
 {
   "id": "uuid",
   "slug": "post-slug",
-  "link": "https://your-site.vercel.app/post/post-slug",
+  "link": "https://zeropressv1.vercel.app/post/post-slug",
   "status": "published",
   "title": "Post Title",
   "created": true
 }
 ```
 
-### POST /api/newsletter
+### `GET /api/posts`
+Lists published posts. Query params: `limit` (1–100, default 10), `tag`.
 
-Subscribe an email.
-
-**Body:** `{ "email": "user@example.com" }`
-
-### GET /api/posts
-
-List published posts. Query params: `limit` (default 10), `tag` (filter by tag).
+### `POST /api/newsletter`
+Subscribes an email address. Body: `{ "email": "user@example.com" }`
 
 ---
 
-## n8n Pipeline Integration
+## Database Schema
 
-Replace the WordPress node in your pipeline with an HTTP Request node:
+**`posts`** — `id, title, slug, excerpt, body_html, meta_description, featured_image_url, primary_keyword, tags[], status, word_count, reading_time, published_at, run_id, interest_score`
 
-**HTTP Request → "Publish to Blog"**
+**`subscribers`** — `id, email, subscribed_at, confirmed, unsubscribed`
 
-- Method: POST
-- URL: `https://your-site.vercel.app/api/posts`
-- Authentication: Header Auth
-  - Name: `Authorization`
-  - Value: `Bearer YOUR_API_SECRET_KEY`
-- Body → JSON:
+RLS enabled on both tables. Anonymous SELECT restricted to `status = 'published'` posts only. All writes require the service role key.
 
-```json
-{
-  "title": "{{ $json.headline }}",
-  "slug": "{{ $json.slug }}",
-  "body_html": "{{ $json.body_html }}",
-  "excerpt": "{{ $json.excerpt }}",
-  "meta_description": "{{ $json.meta_description }}",
-  "tags": {{ JSON.stringify($json.target_keywords || []) }},
-  "primary_keyword": "{{ $json.primary_keyword }}",
-  "status": "published",
-  "word_count": {{ $json.word_count || 0 }},
-  "run_id": "{{ $json.run_id }}",
-  "interest_score": {{ $json.interest_score || 0 }}
-}
-```
+---
 
-The response contains a `link` field with the full post URL.
+## Deploying to Vercel
+
+1. Push to GitHub
+2. Import the repo in [vercel.com](https://vercel.com)
+3. Add all environment variables from the list above
+4. Deploy — Vercel handles the rest
+
+> After updating any environment variable in Vercel, trigger a manual redeploy for changes to take effect.
