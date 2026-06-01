@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    // Authenticate — same API_SECRET_KEY used by the posts route
+    // Accept either API_SECRET_KEY (n8n) or ADMIN_SECRET (admin panel)
     const authHeader = request.headers.get('authorization');
     const token = authHeader?.replace('Bearer ', '');
-    if (!token || token !== process.env.API_SECRET_KEY) {
+    const validTokens = [process.env.API_SECRET_KEY, process.env.ADMIN_SECRET].filter(Boolean);
+    if (!token || !validTokens.includes(token)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
