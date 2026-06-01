@@ -25,26 +25,27 @@ export async function POST(request) {
       headers['Authorization'] = `Bearer ${bearerToken}`;
     }
 
+    console.log('[trigger-workflow] POSTing to n8n:', webhookUrl);
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),
     });
 
+    const responseText = await response.text();
+    console.log('[trigger-workflow] n8n status:', response.status);
+    console.log('[trigger-workflow] n8n response:', responseText);
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('n8n webhook failed:', response.status);
-      throw new Error(`n8n webhook failed with status ${response.status}`);
+      throw new Error(`n8n returned ${response.status}: ${responseText}`);
     }
 
-    const contentType = response.headers.get('content-type');
-    const data = contentType?.includes('application/json')
-      ? await response.json()
-      : await response.text();
+    let data;
+    try { data = JSON.parse(responseText); } catch { data = responseText; }
 
     return NextResponse.json({ success: true, message: 'Workflow triggered successfully', data });
   } catch (error) {
-    console.error('Error triggering n8n workflow:', error.message);
-    return NextResponse.json({ error: 'Failed to trigger workflow' }, { status: 500 });
+    console.error('[trigger-workflow] error:', error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
