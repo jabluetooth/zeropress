@@ -1,4 +1,5 @@
 import './globals.css';
+import SearchModal from '@/components/SearchModal';
 
 export const metadata = {
   title: {
@@ -36,14 +37,14 @@ function Nav() {
       <div className="zp-nav__inner">
         {/* Logo */}
         <a className="zp-logo" href="/">
-          <span className="zp-logo__mark">Z</span>
+          <img src="/logo.svg" alt="ZeroPress" className="zp-logo__img" />
           <span className="zp-logo__word">Zero<b>Press</b></span>
         </a>
 
         {/* Links */}
         <div className="zp-nav__links">
           <a className="zp-nav__link" href="/">Latest</a>
-          <a className="zp-nav__link" href="#">About</a>
+          <a className="zp-nav__link" href="/about">About</a>
         </div>
 
         {/* Right side */}
@@ -52,10 +53,7 @@ function Nav() {
             <span className="dot" />
             AI&nbsp;pipeline
           </span>
-          <span className="zp-search">
-            Search
-            <kbd>⌘K</kbd>
-          </span>
+          <SearchModal />
         </div>
       </div>
     </nav>
@@ -70,7 +68,7 @@ function Footer() {
         {/* About col */}
         <div className="zp-footer__col" style={{ maxWidth: 300 }}>
           <a className="zp-logo" href="/" style={{ marginBottom: 4 }}>
-            <span className="zp-logo__mark">Z</span>
+            <img src="/logo.svg" alt="ZeroPress" className="zp-logo__img" />
             <span className="zp-logo__word">Zero<b>Press</b></span>
           </a>
           <p style={{ color: 'var(--ink-2)', fontSize: '0.86rem', lineHeight: 1.6 }}>
@@ -87,15 +85,15 @@ function Footer() {
         <div className="zp-footer__col">
           <span className="eyebrow" style={{ marginBottom: 4 }}>Sections</span>
           <a href="/">Latest</a>
-          <a href="#">Topics</a>
+          <a href="/about">About</a>
         </div>
 
         {/* Pipeline */}
         <div className="zp-footer__col">
           <span className="eyebrow" style={{ marginBottom: 4 }}>Pipeline</span>
-          <a href="#">How posts are made</a>
-          <a href="#">Editorial policy</a>
-          <a href="#">RSS feed</a>
+          <a href="/about">How posts are made</a>
+          <a href="/about#editorial">Editorial policy</a>
+          <a href="/rss.xml">RSS feed</a>
         </div>
       </div>
 

@@ -107,14 +107,8 @@ export default async function PostPage({ params }) {
           {headings.length > 0 && <TableOfContents headings={headings} />}
         </div>
 
-        {/* AI note */}
-        <div className="ainote" style={{ marginTop: 40 }}>
-          <span className="ic">Z</span>
-          <p>
-            <strong>How this post was made.</strong> ZeroPress drafts each piece with an automated
-            research-and-write pipeline, then a human editor checks the claims and trims the slop.
-          </p>
-        </div>
+        {/* Pipeline attribution */}
+        <p className="pipeline-note">AI-drafted · human-edited</p>
 
         {/* End bar */}
         <div className="endbar">
