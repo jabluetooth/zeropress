@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { timingSafeEqual, createHash } from 'crypto';
+import { issueSessionToken } from '@/lib/adminSession';
 
 // Simple in-memory rate limiter — max 5 attempts per IP per 15 min window
 const attempts = new Map();
@@ -53,7 +54,8 @@ export async function POST(request) {
     );
   }
 
-  // Success — reset counter
+  // Success — reset counter, issue a short-lived session token instead of
+  // having the client hold onto the raw admin secret.
   attempts.delete(ip);
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, token: issueSessionToken(adminSecret) });
 }

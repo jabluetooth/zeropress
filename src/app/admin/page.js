@@ -7,6 +7,7 @@ const SESSION_KEY = 'zp_admin_token';
 
 export default function AdminPage() {
   const [password, setPassword] = useState('');
+  const [token, setToken]       = useState('');
   const [authed, setAuthed]     = useState(false);
   const [authErr, setAuthErr]   = useState('');
   const [checking, setChecking] = useState(true);
@@ -15,11 +16,12 @@ export default function AdminPage() {
   const timerRef                = useRef(null);
   const router                  = useRouter();
 
-  // Restore session from sessionStorage on mount
+  // Restore session from sessionStorage on mount — this holds a short-lived
+  // session token, not the admin password itself.
   useEffect(() => {
     const saved = sessionStorage.getItem(SESSION_KEY);
     if (saved) {
-      setPassword(saved);
+      setToken(saved);
       setAuthed(true);
     }
     setChecking(false);
@@ -38,7 +40,9 @@ export default function AdminPage() {
       const data = await res.json();
       if (res.status === 429) { setAuthErr(data.error); return; }
       if (!res.ok) { setAuthErr(data.error || 'Wrong password.'); return; }
-      sessionStorage.setItem(SESSION_KEY, password);
+      sessionStorage.setItem(SESSION_KEY, data.token);
+      setToken(data.token);
+      setPassword('');
       setAuthed(true);
     } catch {
       setAuthErr('Network error — is the dev server running?');
@@ -49,6 +53,7 @@ export default function AdminPage() {
     sessionStorage.removeItem(SESSION_KEY);
     setAuthed(false);
     setPassword('');
+    setToken('');
     setResult(null);
   }
 
@@ -58,10 +63,15 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/trigger-workflow', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${password}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ action: 'generate-post', timestamp: new Date().toISOString() }),
       });
       const data = await res.json();
+      if (res.status === 401) {
+        handleLogout();
+        setAuthErr('Session expired — please log in again.');
+        return;
+      }
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       setResult({ ok: true, message: 'Workflow triggered — n8n is running. New post lands in ~2 min.' });
       timerRef.current = setTimeout(() => router.refresh(), 20000);

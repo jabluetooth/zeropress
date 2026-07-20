@@ -1,12 +1,20 @@
 import { NextResponse } from 'next/server';
+import { verifySessionToken } from '@/lib/adminSession';
 
 export async function POST(request) {
   try {
-    // Accept either API_SECRET_KEY (n8n) or ADMIN_SECRET (admin panel)
+    // Accept: a short-lived admin session token (issued by /api/admin/verify),
+    // or the raw API_SECRET_KEY / ADMIN_SECRET for direct API callers.
     const authHeader = request.headers.get('authorization');
     const token = authHeader?.replace('Bearer ', '');
-    const validTokens = [process.env.API_SECRET_KEY, process.env.ADMIN_SECRET].filter(Boolean);
-    if (!token || !validTokens.includes(token)) {
+    const adminSecret = process.env.ADMIN_SECRET;
+    const validTokens = [process.env.API_SECRET_KEY, adminSecret].filter(Boolean);
+
+    const isValid =
+      !!token &&
+      (validTokens.includes(token) || (adminSecret && verifySessionToken(token, adminSecret)));
+
+    if (!isValid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -21,9 +29,12 @@ export async function POST(request) {
       );
     }
 
+    // n8n's Webhook node is configured with Header Auth expecting a header
+    // literally named N8N_BEARER_TOKEN (not a standard Authorization: Bearer
+    // header) — match that here, or webhook calls will 401/403 at n8n.
     const headers = { 'Content-Type': 'application/json' };
     if (bearerToken) {
-      headers['Authorization'] = `Bearer ${bearerToken}`;
+      headers['N8N_BEARER_TOKEN'] = bearerToken;
     }
 
     console.log('[trigger-workflow] POSTing to n8n:', webhookUrl);
