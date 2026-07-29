@@ -10,7 +10,7 @@
 
 ## Overview
 
-ZeroPress is a production-grade, fully automated publishing system. Every 6 hours (or on-demand via a secure admin panel), the n8n pipeline:
+ZeroPress is a production-grade, fully automated publishing system. On-demand via a secure admin panel (and optionally every 6 hours on a schedule — see Changelog), the n8n pipeline:
 
 1. Scans 4 independent data sources for trending AI topics
 2. Scores and ranks candidates with a deduplication engine
@@ -286,5 +286,5 @@ The full n8n workflow definition that powers this pipeline is exported at [`Zero
 
 ## Changelog
 
-- **2026-07-29** — Enabled the 6-hour schedule trigger (`Every 6 Hours`) as a documented fallback alongside the primary webhook trigger, so the pipeline now runs on-demand *and* on a 4x-daily cadence, matching the "dual-trigger architecture" already described in the workflow's own design notes. This was verified safe against the existing two-layer duplicate-topic detection (fuzzy title-overlap filtering against the last 15 published posts, plus an exact slug check immediately before publish/email) before being turned on.
+- **2026-07-29** — Verified the 6-hour schedule trigger (`Every 6 Hours`) would be safe to enable as a documented fallback alongside the primary webhook (checked it against the existing two-layer duplicate-topic detection: fuzzy title-overlap filtering against the last 15 published posts, plus an exact slug check immediately before publish/email). The trigger is currently left **disabled** pending an explicit decision to turn on unsupervised, recurring auto-publish-and-email — since flipping it on has real consequences for live subscribers and the live site, that's a call for a human to make deliberately rather than something to flip silently as a "bug fix."
 - **2026-07-29** — Added retry (`retryOnFail`, 3 tries, 2s backoff) to the RSS, Reddit, Google Trends, Mastodon, SerpAPI research, and site-publish HTTP calls, which previously had no resilience against transient failures. The four scraping sources (RSS/Reddit/Trends/Mastodon) also continue past a hard failure (`continueRegularOutput`) so one dead source degrades gracefully instead of killing the run; the SerpAPI research calls and the final publish-to-site call intentionally do **not** get that same continue-on-fail treatment, so a real failure there still surfaces loudly rather than silently short-circuiting a publish or email step.
