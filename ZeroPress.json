@@ -1,0 +1,1888 @@
+{
+  "name": "ZeroPress",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        368,
+        656
+      ],
+      "id": "c4beb8eb-e7a8-4cc4-b063-375b1cba479c",
+      "name": "Every 6 Hours",
+      "disabled": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = {\n  niche: 'artificial intelligence',\n  niche_keywords: 'AI,machine learning,LLM,generative AI',\n  brand_voice: 'authoritative yet accessible, data-driven',\n  target_audience: 'tech professionals and business leaders',\n\n  // RSS feeds - diversify sources beyond just general tech news\n  rss_feeds: [\n    'https://techcrunch.com/category/artificial-intelligence/feed/',\n    'https://feeds.arstechnica.com/arstechnica/index',\n    'https://syncedreview.com/feed/',\n    'https://jack-clark.net/feed/'\n  ],\n\n  // Subreddits - spread across different AI sub-topics to reduce overlap\n  subreddits: ['LocalLLaMA', 'MachineLearning', 'singularity'],\n\n  // Twitter query - narrow to exclude what RSS/Reddit already catches\n  twitter_query: '(AI OR LLM) (startup OR funding OR acquisition OR regulation) -review -tutorial',\n\n  // Raise the threshold so only genuinely distinct stories survive\n  min_interest_score: 55,\n\n  // Add deduplication keys so downstream nodes can filter\n  dedup_window_hours: 48,\n  similarity_threshold: 0.75,\n\n  run_id: 'run_' + Date.now()\n};\nreturn [{ json: config }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        560
+      ],
+      "id": "fabe8a40-c2d8-4b20-9958-bf3143c79d06",
+      "name": "Pipeline Config"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $input.first().json;\nreturn config.rss_feeds.map(url => ({\n  json: { source: 'rss', feedUrl: url, config }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        800
+      ],
+      "id": "936d4e24-bae9-4f97-b814-2f114a2cb865",
+      "name": "RSS Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $input.first().json;\nreturn config.subreddits.map(sub => ({\n  json: { source: 'reddit', subreddit: sub, config }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        608
+      ],
+      "id": "8013a5d2-e82b-4426-9fa1-6c808eda7011",
+      "name": "Reddit Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $input.first().json;\nreturn [{ json: { source: 'google_trends', config } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        416
+      ],
+      "id": "9789213a-6e1d-482a-8cf7-076bea9ad5bf",
+      "name": "Google Items"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.feedUrl }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        800
+      ],
+      "id": "5780ac0d-5065-4b4b-845c-e14e1d42c4aa",
+      "name": "RSS Read",
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().slice(0, 10).map(item => ({\n  json: {\n    title: item.json.title || '',\n    url: item.json.link || '',\n    source: 'rss',\n    snippet: (item.json.contentSnippet || '').replace(/<[^>]*>/g, '').substring(0, 500),\n    score: 50, engagement: 0\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        800
+      ],
+      "id": "bb1d7bdd-4034-4f4b-b5b0-09f330412f28",
+      "name": "Normalize RSS"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.reddit.com/r/{{ $json.subreddit }}/hot.json?limit=25",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "ZeroPress-Bot/1.0 (+https://zeropressv1.vercel.app)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        608
+      ],
+      "id": "809c069c-6207-4457-86c6-133b15eaa9dd",
+      "name": "Fetch Reddit",
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const posts = ($input.first().json.data?.children || []).filter(p => !p.data?.stickied);\nreturn posts.slice(0, 15).map(p => {\n  const d = p.data;\n  return { json: { title: d.title||'', url: 'https://reddit.com'+d.permalink,\n    source: 'reddit', snippet: (d.selftext||'').substring(0,500),\n    score: Math.min(100, Math.round((d.score||0)/50)),\n    engagement: d.num_comments||0 }};\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        608
+      ],
+      "id": "267ba96d-19b5-493b-a987-1d8793295360",
+      "name": "Normalize Reddit"
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "serpApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "engine",
+              "value": "google_trends"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.config.niche_keywords }}"
+            },
+            {
+              "name": "data_type",
+              "value": "TIMESERIES"
+            },
+            {
+              "name": "date",
+              "value": "now 7-d"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        416
+      ],
+      "id": "52e9d59d-6ba4-4dd6-9c02-0bbb91c67ac0",
+      "name": "Fetch Trends",
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const rising = $input.first().json.related_queries?.rising || [];\nif (rising.length > 0) return rising.slice(0,10).map(q => ({\n  json: { title: q.query||'', source: 'google_trends',\n    snippet: 'Rising: '+(q.extracted_value||''),\n    score: Math.min(100, parseInt(q.extracted_value)||50),\n    url: q.link||'', engagement: 0 }\n}));\nreturn [{ json: { title: 'Trends signal', source: 'google_trends',\n  snippet: '', score: 40, url: '', engagement: 0 } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        416
+      ],
+      "id": "2b247357-85dc-457d-8d24-f5c75271a13d",
+      "name": "Normalize Trends"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $input.first().json;\nreturn [{ json: { source: 'mastodon', config } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        224
+      ],
+      "id": "94967b86-48aa-4ee2-824a-abead8c3a823",
+      "name": "Mastodon Items"
+    },
+    {
+      "parameters": {
+        "url": "https://mastodon.social/api/v1/timelines/tag/ai",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "ZeroPress-Bot/1.0 (+https://zeropressv1.vercel.app)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        224
+      ],
+      "id": "6b7c2dab-3946-454c-b4de-4fb60171fd25",
+      "name": "Search Mastodon",
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const posts = $input.all();\nreturn posts.slice(0, 20).map(item => {\n  const t = item.json;\n  const text = (t.content || '').replace(/<[^>]*>/g, '');\n  return { json: {\n    title: text.substring(0, 120),\n    source: 'mastodon',\n    snippet: text.substring(0, 500),\n    url: t.url || '',\n    score: Math.min(100,\n      ((t.favourites_count || 0) / 5) + ((t.reblogs_count || 0) * 3)),\n    engagement: (t.favourites_count || 0) + (t.reblogs_count || 0)\n  }};\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        224
+      ],
+      "id": "96fa33b5-f6d1-426d-b890-0c108a4af5b1",
+      "name": "Normalize Mastodon"
+    },
+    {
+      "parameters": {
+        "numberInputs": 4
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1488,
+        528
+      ],
+      "id": "b903f97a-755f-4afc-9909-37ae76c4eeaf",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nconst seen = new Set(), topics = [];\n\nfor (const item of allItems) {\n  const sources = item.json.topics || [item.json];\n  \n  for (const t of sources) {\n    if (!t.title || t.title.length < 10) continue;\n    const key = t.title.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 50);\n    if (seen.has(key)) continue;\n    seen.add(key);\n    topics.push(t);\n  }\n}\n\nconst ranked = topics.sort((a,b) =>\n  ((b.score||0)+Math.min(20,(b.engagement||0)/10)) -\n  ((a.score||0)+Math.min(20,(a.engagement||0)/10))\n).slice(0, 15);\n\nreturn [{ json: { topics: ranked, count: ranked.length } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1712,
+        560
+      ],
+      "id": "7735b06a-6577-4d2e-bf74-eead20d14eb9",
+      "name": "Merge Dedup & Rank"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        2464,
+        784
+      ],
+      "id": "240b454f-95f1-4aaa-ba4d-966c76b73e11",
+      "name": "Groq Chat Model"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json.topics) }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a content strategist. Analyze these trending topics and select the BEST ONE for a blog post.  Brand voice: authoritative yet accessible, data-driven Target audience: tech professionals and business leaders Niche: artificial intelligence  Recently published articles — do NOT select a topic that substantially overlaps with any of these; if your top-scoring candidate is too similar to one of these, choose the next distinct candidate instead: {{ JSON.stringify($json.recently_covered_titles || []) }}  Return ONLY a JSON object (no markdown fences, no extra text before or after): {   \"selected_topic\": \"clear topic title\",   \"angle\": \"unique hook or angle\",   \"search_queries\": [\"query1\", \"query2\", \"query3\"],   \"target_keywords\": [\"kw1\", \"kw2\", \"kw3\"],   \"estimated_interest_score\": 75,   \"brand_safety\": \"safe\" }  Do NOT write anything before or after the JSON."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2384,
+        560
+      ],
+      "id": "bbbb8a6c-7d05-4f09-b88e-2d19c932fb7a",
+      "name": "AI Topic Selector"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nlet sel;\ntry {\n  const text = raw.text || raw.output || JSON.stringify(raw);\n  sel = JSON.parse(text.replace(/```json\\n?|```/g, '').trim());\n} catch (e) {\n  throw new Error('AI returned invalid JSON: ' + e.message);\n}\nsel.config = $('Pipeline Config').first().json;\nreturn [{ json: sel }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2736,
+        560
+      ],
+      "id": "18ba44c1-692c-420e-915a-bd1c1ebdafe3",
+      "name": "Parse AI Selection"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b786e018-5790-48aa-a0fa-968599d4e920",
+              "leftValue": "={{ $json.brand_safety }}",
+              "rightValue": "unsafe",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "abed4fa2-5564-48b8-bca7-0e91e628e64d",
+              "leftValue": "={{ $json.estimated_interest_score }}",
+              "rightValue": 40,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2960,
+        560
+      ],
+      "id": "33bce11a-a6e9-47e0-9f15-5171484a10e1",
+      "name": "Brand Safety Gate"
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "serpApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "engine",
+              "value": "google"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.search_queries[2] }}"
+            },
+            {
+              "name": "num",
+              "value": "10"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        3184,
+        736
+      ],
+      "id": "92bf4c5c-52dd-4eee-b5d7-bb36f54bb6a5",
+      "name": "SERP Query 2",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nconst research = [], seen = new Set();\nfor (const item of allItems) {\n  for (const r of (item.json.organic_results || [])) {\n    if (seen.has(r.link)) continue; seen.add(r.link);\n    research.push({ title: r.title, url: r.link, snippet: r.snippet, source: r.displayed_link });\n  }\n  for (const q of (item.json.related_questions || []))\n    research.push({ title: q.question, snippet: q.snippet, source: 'people_also_ask' });\n}\nconst topic = $('Parse AI Selection').first().json;\nreturn [{ json: {\n  selected_topic: topic.selected_topic, angle: topic.angle,\n  target_keywords: topic.target_keywords,\n  brand_voice: topic.config.brand_voice, target_audience: topic.config.target_audience,\n  research_results: research.slice(0, 20), run_id: topic.config.run_id\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3408,
+        512
+      ],
+      "id": "16c49c97-50c9-4abe-a3f3-8d27c18fbc5d",
+      "name": "Aggregate Research"
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "serpApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "engine",
+              "value": "google"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.search_queries[1] }}"
+            },
+            {
+              "name": "num",
+              "value": "10"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        3184,
+        544
+      ],
+      "id": "643569d8-c2ae-42bf-abd6-336e02e85945",
+      "name": "SERP Query 1",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "serpApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "engine",
+              "value": "google"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.search_queries[0] }}"
+            },
+            {
+              "name": "num",
+              "value": "10"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        3184,
+        352
+      ],
+      "id": "4f283ef6-06d8-414e-9ad1-967ea831b04a",
+      "name": "SERP Query",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json.research_results) }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an expert long-form content writer. Voice: {{ $json.brand_voice }} Audience: {{ $json.target_audience }} Topic: {{ $json.selected_topic }} Angle: {{ $json.angle }} Keywords: {{ $json.target_keywords.join(', ') }}\n\nWrite a comprehensive 1500-2500 word blog post.\n\nRespond in EXACTLY this two-part format and nothing else — do not wrap the whole response in JSON, since HTML inside a JSON string is error-prone to escape correctly:\n\n1) A single-line JSON object with ONLY these fields (no body_html field here, no markdown fences, no commentary before it):\n{\"headline\":\"\",\"meta_description\":\"max 155 chars\",\"slug\":\"url-friendly-slug\",\"word_count\":2000,\"primary_keyword\":\"\",\"excerpt\":\"2-3 sentence summary\"}\n\n2) On the next line, the literal delimiter: ---BODY_HTML---\n\n3) Then the full article body as raw HTML (h2, p, ul, blockquote tags) — plain HTML, NOT JSON-escaped, NOT wrapped in quotes, starting with <article> and ending with </article>, and nothing after it."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        3632,
+        512
+      ],
+      "id": "2f786444-76d7-4be0-b4c7-db9a5c64a7a4",
+      "name": "Blog Writer"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {
+          "maxTokensToSample": 4096,
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        3712,
+        736
+      ],
+      "id": "2b7922c8-c36c-4d44-bcef-c153135c3d8e",
+      "name": "Groq Chat Model1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst text = raw.text || raw.output || JSON.stringify(raw);\n\nconst delimiter = '---BODY_HTML---';\nconst idx = text.indexOf(delimiter);\nif (idx === -1) {\n  throw new Error('Blog output missing ---BODY_HTML--- delimiter: ' + text.slice(0, 200));\n}\n\nconst metaText = text.slice(0, idx).replace(/```json\\n?|```/g, '').trim();\nconst bodyHtml = text.slice(idx + delimiter.length).replace(/```html\\n?|```\\s*$/g, '').trim();\n\nlet blog;\ntry {\n  blog = JSON.parse(metaText);\n} catch (e) {\n  throw new Error('Blog metadata JSON parse failed: ' + e.message);\n}\n\nblog.body_html = bodyHtml;\n\nconst r = $('Aggregate Research').first().json;\nblog.selected_topic = r.selected_topic;\nblog.target_keywords = r.target_keywords;\nblog.run_id = r.run_id;\nreturn [{ json: blog }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3984,
+        512
+      ],
+      "id": "27b822c2-1e85-4126-ae4f-3fb45b65c2ed",
+      "name": "Parse Blog Output"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.headline }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Create social media variations for this blog post.\nHeadline: {{ $json.headline }}\nExcerpt: {{ $json.excerpt }}\nKeywords: {{ ($json.target_keywords || []).join(', ') }}\n\nReturn ONLY JSON (no fences, no extra text):\n{\n  \"twitter_thread\": [\"tweet1 hook max 270 chars\", \"tweet2 key insight\", \"tweet3 data point\", \"tweet4 takeaway\", \"tweet5 CTA with [LINK]\"],\n  \"linkedin_post\": \"professional post 200-300 words with [LINK]\",\n  \"instagram_caption\": \"engaging caption with hashtags\",\n  \"newsletter_subject\": \"email subject max 60 chars\",\n  \"newsletter_body\": \"3 paragraphs with [LINK]\"\n}\n\nDo NOT write anything before or after the JSON."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        4880,
+        208
+      ],
+      "id": "55e34eb4-2f5e-443a-865d-48623be2a514",
+      "name": "Social Generator"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {
+          "maxTokensToSample": 4096,
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        4960,
+        432
+      ],
+      "id": "0e267aa7-ed3f-4337-a2a5-cfc3722c6b6e",
+      "name": "Groq Chat Model2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nlet social;\ntry {\n  const text = raw.text || raw.output || JSON.stringify(raw);\n  social = JSON.parse(text.replace(/```json\\n?|```/g, '').trim());\n} catch (e) {\n  social = {\n    twitter_thread: ['Check out our latest: [LINK]'],\n    linkedin_post: 'New article: [LINK]',\n    instagram_caption: 'New post! Link in bio.',\n    newsletter_subject: 'New article',\n    newsletter_body: 'Read more at [LINK]'\n  };\n}\nreturn [{ json: social }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5232,
+        320
+      ],
+      "id": "45272af2-4175-420c-8e68-368804ef1d59",
+      "name": "Parse Social Output"
+    },
+    {
+      "parameters": {
+        "jsCode": "const headline = $input.first().json.headline;\n\n// Extract key concepts from headline, remove common words\nconst keywords = headline\n  .replace(/[^a-zA-Z\\s]/g, '')\n  .split(' ')\n  .filter(w => w.length > 3)\n  .filter(w => !['this', 'that', 'with', 'from', 'have', 'will', 'been', 'their', 'about', 'would', 'could', 'should', 'there', 'where', 'which', 'these', 'those', 'into', 'more', 'than', 'what', 'when', 'your', 'does', 'being'].includes(w.toLowerCase()))\n  .slice(0, 5)\n  .join(', ');\n\nreturn [{ json: {\n  inputs: 'Abstract digital artwork representing the concept of ' + keywords + '. Futuristic technology illustration, flowing shapes, vibrant neon lighting, deep blue and cyan color palette, cinematic composition, ultra detailed, no words, no letters, no text, no typography, no writing, no characters, no numbers, no watermarks, 16:9 ratio',\n  parameters: { num_inference_steps: 4, guidance_scale: 0 }\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4208,
+        704
+      ],
+      "id": "1531a02e-d48b-44d5-a40b-1a96e1bd8c3d",
+      "name": "Prepare Image Prompt"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        5456,
+        544
+      ],
+      "id": "619781da-6b2b-4eb9-81e6-d83140606134",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nlet blog = {}, social = {}, imageUrl = '';\n\nfor (const item of allItems) {\n  const d = item.json;\n  if (d.headline) blog = { ...blog, ...d };\n  if (d.twitter_thread) social = { ...social, ...d };\n  if (d.featured_image_url) imageUrl = d.featured_image_url;\n}\n\nreturn [{ json: {\n  ...blog,\n  ...social,\n  featured_image_url: imageUrl\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5680,
+        560
+      ],
+      "id": "0f838f8a-2051-4467-be24-dbc69f371cec",
+      "name": "Assemble Content Package"
+    },
+    {
+      "parameters": {
+        "jsCode": "const zp = $input.first().json;\nconst content = $('Assemble Content Package').first().json;\nconst url = zp.link || '';\n\nconst fix = t => {\n  if (typeof t === 'string') return t.replace(/\\[LINK\\]/g, url);\n  if (Array.isArray(t)) return t.map(s => typeof s === 'string' ? s.replace(/\\[LINK\\]/g, url) : s);\n  return t;\n};\n\nreturn [{ json: {\n  ...content,\n  post_id: zp.id || '',\n  post_url: url,\n  twitter_thread: fix(content.twitter_thread),\n  linkedin_post: fix(content.linkedin_post),\n  newsletter_body: fix(content.newsletter_body)\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6800,
+        640
+      ],
+      "id": "b8340318-2417-4b2d-bf78-e87d4eca286f",
+      "name": "Inject Post URL"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.brevo.com/v3/smtp/email",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "sendInBlueApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ sender: { name: \"ZeroPress\", email: \"zeropress@filheinzrelatorre.com\" }, to: [{ email: $json.recipient_email }], subject: $json.newsletter_subject, htmlContent: \"<html><body style='font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;'><h1>\" + $json.headline + \"</h1><p>\" + $json.newsletter_body + \"</p><br><a href='\" + $json.post_url + \"' style='background:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;'>Read Full Article</a></body></html>\" }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        7696,
+        688
+      ],
+      "id": "82e4bc2d-7e42-4f9c-9de6-13dc0fa76653",
+      "name": "Brevo: Send Newsletter"
+    },
+    {
+      "parameters": {
+        "jsCode": "const c = $('Inject Post URL')?.first()?.json || $('Is Duplicate?')?.first()?.json || $input.first().json;\nlet brevoId = '';\ntry { brevoId = $('Brevo: Send Newsletter').first().json?.messageId || ''; } catch(e) {}\n\nreturn [{ json: {\n  run_id: c.run_id || '',\n  timestamp: new Date().toISOString(),\n  topic: c.selected_topic || '',\n  headline: c.headline || '',\n  slug: c.slug || '',\n  post_url: c.post_url || '',\n  brevo_message_id: brevoId,\n  status: c.skip ? 'skipped_duplicate' : 'completed',\n  reason: c.reason || ''\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7024,
+        464
+      ],
+      "id": "3699e06b-db68-423f-a75a-813fb63b2439",
+      "name": "Build Log Record"
+    },
+    {
+      "parameters": {
+        "url": "https://qvhlprtppakttxseqkgh.supabase.co/rest/v1/subscribers?unsubscribed=eq.false&select=email",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        7024,
+        688
+      ],
+      "id": "487f2405-0576-4fb0-9bfa-3ba306d56c18",
+      "name": "Fetch Subscribers"
+    },
+    {
+      "parameters": {
+        "jsCode": "const subscribers = $input.all().map(item => item.json);\nconst content = $('Inject Post URL').first().json;\n\nif (!subscribers || subscribers.length === 0 || !subscribers[0].email) {\n  return [{ json: { ...content, recipient_email: '', count: 0, skip: true } }];\n}\n\n// One item per subscriber so the Brevo node (which runs once per input item)\n// sends an individual email instead of one email exposing every address in `to`.\nreturn subscribers.map(s => ({ json: {\n  ...content,\n  recipient_email: s.email,\n  count: subscribers.length,\n} }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7248,
+        688
+      ],
+      "id": "3f6f9276-1bf1-4561-a651-fd9c2034bb9d",
+      "name": "Prepare Newsletter"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ee5cde4b-ac4d-445f-b9a9-d7a5bc117012",
+              "leftValue": "={{ $json.count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        7472,
+        688
+      ],
+      "id": "2fd2a5c4-5dab-433e-9d78-e40102f01b63",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1yP_cYCKuWusTUCd9im9DjiySIEjtBZCWIOHt2ydMybc",
+          "mode": "list",
+          "cachedResultName": "Pipeline Runs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yP_cYCKuWusTUCd9im9DjiySIEjtBZCWIOHt2ydMybc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "=https://docs.google.com/spreadsheets/d/1yP_cYCKuWusTUCd9im9DjiySIEjtBZCWIOHt2ydMybc/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "run_id": "=  {{ $json.run_id }}",
+            "timestamp ": "=  {{ $json.timestamp }}",
+            "topic ": "={{ $json.topic }}",
+            "headline ": "={{ $json.headline }}",
+            "slug ": "={{ $json.slug }}",
+            "post_url ": "={{ $json.post_url }}",
+            "brevo_message_id ": "={{ $json.brevo_message_id }}",
+            "status": "={{ $json.status }}"
+          },
+          "matchingColumns": [
+            "run_id"
+          ],
+          "schema": [
+            {
+              "id": "run_id",
+              "displayName": "run_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "timestamp ",
+              "displayName": "timestamp ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "topic ",
+              "displayName": "topic ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "headline ",
+              "displayName": "headline ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "slug ",
+              "displayName": "slug ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "post_url ",
+              "displayName": "post_url ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "brevo_message_id ",
+              "displayName": "brevo_message_id ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        7248,
+        464
+      ],
+      "id": "cf993c97-6e32-4b6a-b705-d7f566073eba",
+      "name": "Log to Sheets"
+    },
+    {
+      "parameters": {
+        "content": "## STAGE 1: Trigger & Configuration\n\nOrchestrates the entire pipeline via **Webhook API** with schedule fallback.\n\n- **Webhook Trigger (Primary)** — POST `/webhook/zeropress-run` with Bearer token authentication. Enables on-demand content generation from any external system, admin panel, or API call\n- **Schedule Trigger (Fallback)** — 6-hour cron cycle ensures continuous content output *(4x daily)* even without manual intervention\n- **Centralized config node** controls niche targeting, brand voice, audience persona, source feeds, and quality thresholds\n- **Single point of configuration** — changing the niche here propagates to all downstream AI prompts and source queries automatically\n- **Dual-trigger architecture** — both entry points feed into the same pipeline, ensuring consistent behavior regardless of how the workflow is started",
+        "height": 640,
+        "width": 288
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        32,
+        352
+      ],
+      "typeVersion": 1,
+      "id": "aee11423-4417-409d-a24b-b35fd9287ab5",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "##  STAGE 2: Multi-Source Intelligence Gathering\n\n**Parallel data collection** from 4 independent sources for comprehensive trend coverage.\n\n- **RSS** *(3 feeds)* — curated tech publications for editorial-quality signals\n- **Reddit** *(3 subreddits)* — community engagement and discussion-driven trends\n- **Google Trends** *(SerpAPI)* — real-time search interest data\n- **Mastodon** *(#ai)* — open-source social signals without API paywalls\n\n> Each source is independently **normalized to a common schema** *(title, snippet, score, engagement)* for unified downstream processing. Architecture is **modular** — sources can be added or removed without affecting the rest of the pipeline.",
+        "height": 304,
+        "width": 576,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        784,
+        928
+      ],
+      "typeVersion": 1,
+      "id": "320b0c34-cbef-4b49-b42a-8dd314d15438",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## STAGE 3: Deduplication & Ranking Engine\n\n**Cross-source normalization** and intelligent topic ranking.\n\n- **Merge node** *(Append mode)* combines all source branches into a single stream\n- **Fuzzy deduplication** by normalized title prevents duplicate content across sources\n- **Composite scoring algorithm:** `raw_score + engagement_bonus` *(capped)*\n- Outputs a **ranked shortlist of top 15 topics** for AI evaluation\n- Handles variable input volumes gracefully — works whether sources return 5 items or 50",
+        "height": 304,
+        "width": 496,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1440,
+        192
+      ],
+      "typeVersion": 1,
+      "id": "a2ab913c-9191-405f-85b8-7b9f74b18e6f",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "##  STAGE 4: AI-Powered Topic Selection & Safety Gating\n\n**Groq LLM** *(Llama 3.3 70B)* evaluates all candidates and selects the optimal topic.\n\n- **Prompt-engineered** to evaluate: trend momentum, audience fit, content potential, and brand alignment\n- Returns **structured JSON:** topic, angle, search queries, SEO keywords, interest score, and safety classification\n- **Brand Safety Gate** *(IF node)* enforces two conditions:\n  - Topic must **not** be flagged `\"unsafe\"`\n  - Interest score must meet **minimum threshold** *(40+)*\n- Failed topics are silently dropped — pipeline waits for next cycle\n- **Temperature: 0.3** for consistent, analytical decision-making",
+        "height": 320,
+        "width": 640
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1904,
+        912
+      ],
+      "typeVersion": 1,
+      "id": "fabd0ac0-8f9e-4df3-9c02-bfcf0d37a9cd",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "##  STAGE 5: Automated SERP Research\n\n**Deep research via Google Search** to ground the blog post in real data.\n\n- **3 parallel SerpAPI queries** using AI-generated search terms\n- Extracts **organic results** *(title, URL, snippet)* + **\"People Also Ask\"** questions\n- **Cross-query deduplication** prevents redundant research data\n- Aggregates up to **20 unique research items** for content generation\n- Research results provide **factual grounding** — reducing AI hallucination risk in the final blog post",
+        "height": 272,
+        "width": 560,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2496,
+        48
+      ],
+      "typeVersion": 1,
+      "id": "7de006ca-58f3-4553-9793-f0677e06f1c4",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "##  STAGE 6: Multi-Track Content Generation\n\n**Three parallel AI processes** produce a complete content package simultaneously.\n\n### Track A — Long-Form Blog Post\n*Groq, Llama 3.3 70B*\n- **1500-2500 word** SEO-optimized article with HTML formatting\n- Grounded in SERP research data for **factual accuracy**\n- Outputs: `headline`, `slug`, `body_html`, `excerpt`, `meta_description`\n\n### Track B — Social Media Variants\n*Groq, Llama 3.3 70B*\n- Platform-specific: **Twitter thread**, **LinkedIn post**, **Instagram caption**, **newsletter copy**\n- `[LINK]` placeholders for post-publish URL injection\n- **Graceful fallback** if generation fails — pipeline continues\n\n### Track C — Featured Image\n*Hugging Face FLUX.1-schnell*\n- AI-generated blog header image from headline context\n- **4-step distilled inference** for fast generation\n- **Non-blocking** — image failure doesn't halt the pipeline\n\n> All tracks converge into a **unified content package** via Merge + Assembly node.",
+        "height": 816,
+        "width": 528,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3600,
+        64
+      ],
+      "typeVersion": 1,
+      "id": "58e349e9-80de-4beb-a6aa-28293ed41e60",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "##  STAGE 7: Automated Publishing\n\nPushes content to the custom-built **ZeroPress** platform.\n\n- **REST API call** to ZeroPress *(Next.js + Supabase on Vercel)*\n- **Bearer token authentication** for secure write access\n- **Upsert logic** — same slug updates existing, new slug creates new post\n- API returns the **live post URL immediately**\n- **Inject Post URL** replaces all `[LINK]` placeholders across social content with the real published URL\n\n> **ZeroPress Stack:** Next.js 15 *(App Router)* · Supabase *(Postgres)* · Vercel *(Edge Network)* · Tailwind CSS · ISR *(60s revalidation)*",
+        "height": 320,
+        "width": 692
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        4784,
+        752
+      ],
+      "typeVersion": 1,
+      "id": "235b8c8d-7a89-40e6-b761-c9faa6ab6a93",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "content": "##  STAGE 8: Newsletter Distribution\n\n**Automated email delivery** to the subscriber base.\n\n- Queries **Supabase REST API** for active subscribers *(unsubscribed=false)*\n- **Conditional logic** skips sending if subscriber list is empty\n- **Brevo transactional API** delivers HTML-formatted newsletter\n- Email includes: headline, content summary, and **CTA button** linking to the published post\n- Subscriber management handled by ZeroPress's **built-in signup form** + Supabase storage\n- **Free tier:** 300 emails/day — sufficient for early-stage growth",
+        "height": 256,
+        "width": 656,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        5840,
+        816
+      ],
+      "typeVersion": 1,
+      "id": "3f6ddee0-36e8-4c67-bc6f-6ecf5c8d0a18",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "content": "##  STAGE 9: Performance Analytics & Logging\n\n**Every pipeline execution is tracked** for optimization.\n\n- Captures: `run_id`, `timestamp`, `topic`, `headline`, `slug`, `post_url`, `brevo_message_id`, `status`\n- **Appends to Google Sheets** for accessible reporting\n- Receives input from **both success and skip paths** — every run is logged regardless of outcome\n- Enables **data-driven optimization:** track which topics, sources, and content types drive the most engagement\n- Foundation for **future feedback loop** — top-performing patterns can be fed back into the topic selection prompt",
+        "height": 288,
+        "width": 656,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        6864,
+        336
+      ],
+      "typeVersion": 1,
+      "id": "41963aa1-c348-4d25-b3cb-ebfa7e4e19c3",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://qvhlprtppakttxseqkgh.supabase.co/storage/v1/object/post-images/{{ $('Parse Blog Output').first().json.slug }}.png",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "image/png"
+            },
+            {
+              "name": "x-upsert",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        4944,
+        704
+      ],
+      "id": "0ac60856-3cf7-4d79-98ea-9ea6449bd9e1",
+      "name": "Upload Image to Supabase"
+    },
+    {
+      "parameters": {
+        "jsCode": "const slug = $('Parse Blog Output').first().json.slug;\nconst supabaseUrl = 'https://qvhlprtppakttxseqkgh.supabase.co';\nconst imageUrl = supabaseUrl + '/storage/v1/object/public/post-images/' + slug + '.png';\n\nreturn [{ json: { featured_image_url: imageUrl } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5232,
+        704
+      ],
+      "id": "138d8ce8-9e27-43b2-b7c2-7e726cef7fc5",
+      "name": "Build Image URL"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://router.huggingface.co/together/v1/images/generations",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "huggingFaceApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"black-forest-labs/FLUX.1-schnell\", prompt: $json.inputs, response_format: \"base64\", steps: $json.parameters.num_inference_steps, guidance_scale: $json.parameters.guidance_scale }) }}",
+        "options": {
+          "response": {
+            "response": {}
+          },
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        4432,
+        704
+      ],
+      "id": "2a5ac61a-744d-4853-8a98-a948bb5be663",
+      "name": "FLUX Blog Image"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://zeropressv1.vercel.app/api/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: $json.headline, slug: $json.slug, body_html: $json.body_html, excerpt: $json.excerpt, meta_description: $json.meta_description, tags: $json.target_keywords, primary_keyword: $json.primary_keyword, featured_image_url: $json.featured_image_url, status: \"published\", word_count: $json.word_count, run_id: $json.run_id }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        6576,
+        640
+      ],
+      "id": "ff4e6647-cfe5-409b-ba7c-9b8b602280a4",
+      "name": "Publish to ZeroPress",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const res = $input.first().json;\nconst results = (res && typeof res === 'object' && 'body' in res) ? res.body : res;\nconst content = $('Assemble Content Package').first().json;\n\n// If results is an array with items, slug already exists\nconst isDuplicate = Array.isArray(results) && results.length > 0;\n\nreturn [{ json: {\n  ...content,\n  skip: isDuplicate,\n  reason: isDuplicate ? 'Duplicate slug: ' + content.slug : ''\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6128,
+        560
+      ],
+      "id": "2a09adca-74ca-47fa-87e8-9a38600f26a3",
+      "name": "Is Duplicate?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "baf3f5af-1340-438c-97d0-7249f2bc4d0f",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        6352,
+        560
+      ],
+      "id": "2cbc570e-5eb5-4cee-b37e-0330d0b9284e",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "url": "=https://qvhlprtppakttxseqkgh.supabase.co/rest/v1/posts?slug=eq.{{ $json.slug }}&select=id",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        5904,
+        560
+      ],
+      "id": "2a2dbae0-63e6-458f-b3bc-c318f138d637",
+      "name": "Check Duplicate"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "zeropress-run",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        368,
+        464
+      ],
+      "id": "eb3add5a-0881-411c-9596-39b065e3c67b",
+      "name": "Webhook",
+      "webhookId": "24b85731-8da9-4270-a1f4-1c9f94ab4046"
+    },
+    {
+      "parameters": {
+        "content": "#  ZEROPRESS — Zero-Touch AI Publishing Platform\n### Built by Fil Heinz O. Re La Torre\nAn end-to-end automated content pipeline that **researches trending topics**, **writes SEO-optimized blog posts**, **generates images**, **publishes to a custom Next.js site**, **distributes newsletters**, and **logs performance** — with **zero human intervention**.\n\n**Tech Stack:** Groq LLM · Hugging Face FLUX · SerpAPI · Supabase · Next.js · Vercel · Brevo · n8n\n**Architecture:** 37 nodes · 4 data sources · 3 AI models · 6 integrations\n**Cost:** $0/month (all free tiers)",
+        "height": 304,
+        "width": 640,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "5193738d-174e-45db-8e39-b00907f45d8f",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "posts",
+        "limit": 15,
+        "orderBy": "published_at.desc",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "published"
+            }
+          ]
+        }
+      },
+      "id": "7f6f14d5-3573-4f24-ab57-d3dc1378f215",
+      "name": "Fetch Recent Posts",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1936,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const recentPosts = $input.all().map(i => i.json);\nconst candidates = $('Merge Dedup & Rank').first().json.topics;\n\nconst normalize = s => (s || '')\n  .toLowerCase()\n  .replace(/[^a-z0-9\\s]/g, '')\n  .split(/\\s+/)\n  .filter(w => w.length > 3);\n\nconst recentWordSets = recentPosts.map(p => new Set(normalize(p.title)));\n\nfunction overlapRatio(title) {\n  const words = normalize(title);\n  if (!words.length) return 0;\n  let maxRatio = 0;\n  for (const set of recentWordSets) {\n    const overlap = words.filter(w => set.has(w)).length;\n    maxRatio = Math.max(maxRatio, overlap / words.length);\n  }\n  return maxRatio;\n}\n\n// Drop candidates that look like a rehash of something already published\n// (>=50% of their significant words already appear in a recent title).\nconst fresh = candidates.filter(t => overlapRatio(t.title) < 0.5);\n\nreturn [{ json: {\n  // Fail-open: if literally everything looks covered, still let the LLM\n  // pick something rather than dead-ending the run.\n  topics: fresh.length > 0 ? fresh : candidates,\n  recently_covered_titles: recentPosts.map(p => p.title).filter(Boolean),\n} }];\n"
+      },
+      "id": "b22d3be2-38bf-4c75-a095-b8f90ff5aa9a",
+      "name": "Filter Repeat Topics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "data[0].b64_json",
+        "options": {}
+      },
+      "id": "87e4866b-86ae-48a2-84b8-0144f13ea6b0",
+      "name": "Decode Image Base64",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        4656,
+        704
+      ]
+    }
+  ],
+  "connections": {
+    "Every 6 Hours": {
+      "main": [
+        [
+          {
+            "node": "Pipeline Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pipeline Config": {
+      "main": [
+        [
+          {
+            "node": "Reddit Items",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Items",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google Items",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Mastodon Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Items": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reddit Items": {
+      "main": [
+        [
+          {
+            "node": "Fetch Reddit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Items": {
+      "main": [
+        [
+          {
+            "node": "Fetch Trends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Normalize RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize RSS": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Fetch Reddit": {
+      "main": [
+        [
+          {
+            "node": "Normalize Reddit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Reddit": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Fetch Trends": {
+      "main": [
+        [
+          {
+            "node": "Normalize Trends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Trends": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Mastodon Items": {
+      "main": [
+        [
+          {
+            "node": "Search Mastodon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Mastodon": {
+      "main": [
+        [
+          {
+            "node": "Normalize Mastodon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Mastodon": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Merge Dedup & Rank",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Topic Selector",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Topic Selector": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Selection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Selection": {
+      "main": [
+        [
+          {
+            "node": "Brand Safety Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brand Safety Gate": {
+      "main": [
+        [
+          {
+            "node": "SERP Query",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "SERP Query 1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "SERP Query 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SERP Query 2": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SERP Query 1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SERP Query": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Research": {
+      "main": [
+        [
+          {
+            "node": "Blog Writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Blog Writer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Blog Writer": {
+      "main": [
+        [
+          {
+            "node": "Parse Blog Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Blog Output": {
+      "main": [
+        [
+          {
+            "node": "Social Generator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare Image Prompt",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Social Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Social Generator": {
+      "main": [
+        [
+          {
+            "node": "Parse Social Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Social Output": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Image Prompt": {
+      "main": [
+        [
+          {
+            "node": "FLUX Blog Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Assemble Content Package",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assemble Content Package": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inject Post URL": {
+      "main": [
+        [
+          {
+            "node": "Build Log Record",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Subscribers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Subscribers": {
+      "main": [
+        [
+          {
+            "node": "Prepare Newsletter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Newsletter": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Brevo: Send Newsletter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Log Record": {
+      "main": [
+        [
+          {
+            "node": "Log to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Image to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Build Image URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Image URL": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Publish to ZeroPress": {
+      "main": [
+        [
+          {
+            "node": "Inject Post URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Duplicate?": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Publish to ZeroPress",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Log Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Duplicate": {
+      "main": [
+        [
+          {
+            "node": "Is Duplicate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Pipeline Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Dedup & Rank": {
+      "main": [
+        [
+          {
+            "node": "Fetch Recent Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Recent Posts": {
+      "main": [
+        [
+          {
+            "node": "Filter Repeat Topics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Repeat Topics": {
+      "main": [
+        [
+          {
+            "node": "AI Topic Selector",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FLUX Blog Image": {
+      "main": [
+        [
+          {
+            "node": "Decode Image Base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decode Image Base64": {
+      "main": [
+        [
+          {
+            "node": "Upload Image to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  }
+}
