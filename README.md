@@ -277,3 +277,14 @@ RLS enabled on both tables. Anonymous SELECT restricted to `status = 'published'
 4. Deploy — Vercel handles the rest
 
 > After updating any environment variable in Vercel, trigger a manual redeploy for changes to take effect.
+
+---
+
+## n8n Workflow
+
+The full n8n workflow definition that powers this pipeline is exported at [`ZeroPress.json`](./ZeroPress.json) in the repo root. Import it into a self-hosted n8n instance to inspect or re-run the pipeline (requires the credentials noted in `.env.example`: Groq, SerpAPI, Hugging Face, Supabase, Brevo, and the ZeroPress API bearer token).
+
+## Changelog
+
+- **2026-07-29** — Enabled the 6-hour schedule trigger (`Every 6 Hours`) as a documented fallback alongside the primary webhook trigger, so the pipeline now runs on-demand *and* on a 4x-daily cadence, matching the "dual-trigger architecture" already described in the workflow's own design notes. This was verified safe against the existing two-layer duplicate-topic detection (fuzzy title-overlap filtering against the last 15 published posts, plus an exact slug check immediately before publish/email) before being turned on.
+- **2026-07-29** — Added retry (`retryOnFail`, 3 tries, 2s backoff) to the RSS, Reddit, Google Trends, Mastodon, SerpAPI research, and site-publish HTTP calls, which previously had no resilience against transient failures. The four scraping sources (RSS/Reddit/Trends/Mastodon) also continue past a hard failure (`continueRegularOutput`) so one dead source degrades gracefully instead of killing the run; the SerpAPI research calls and the final publish-to-site call intentionally do **not** get that same continue-on-fail treatment, so a real failure there still surfaces loudly rather than silently short-circuiting a publish or email step.
