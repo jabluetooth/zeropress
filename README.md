@@ -1,6 +1,6 @@
-# ZeroPress — Zero-Touch AI Publishing Platform
+# ZeroPress - Zero-Touch AI Publishing Platform
 
-> An end-to-end automated content pipeline that researches trending topics, writes SEO-optimized blog posts, generates cover images, publishes to a custom Next.js site, distributes newsletters, and logs performance — with zero human intervention.
+> An end-to-end automated content pipeline that researches trending topics, writes SEO-optimized blog posts, generates cover images, publishes to a custom Next.js site, distributes newsletters, and logs performance - with zero human intervention.
 
 **Built by Fil Heinz O. Re La Torre**
 
@@ -10,7 +10,7 @@
 
 ## Overview
 
-ZeroPress is a production-grade, fully automated publishing system. On-demand via a secure admin panel (and optionally every 6 hours on a schedule — see Changelog), the n8n pipeline:
+ZeroPress is a production-grade, fully automated publishing system. On-demand via a secure admin panel (and optionally every 6 hours on a schedule - see Changelog), the n8n pipeline:
 
 1. Scans 4 independent data sources for trending AI topics
 2. Scores and ranks candidates with a deduplication engine
@@ -22,7 +22,7 @@ ZeroPress is a production-grade, fully automated publishing system. On-demand vi
 8. Emails all active subscribers via Brevo
 9. Logs every run to Google Sheets for analytics
 
-**Total infrastructure cost: $0/month** — built entirely on free tiers.
+**Total infrastructure cost: $0/month** - built entirely on free tiers.
 
 ---
 
@@ -44,7 +44,7 @@ Webhook / Schedule Trigger (every 6 hrs)
     Merge → Dedup → Rank  (top 15)
               │
               ▼
-   Groq LLM — Topic Selection
+   Groq LLM - Topic Selection
      + Brand Safety Gate
               │
      ┌────────┼────────┐
@@ -103,7 +103,7 @@ Webhook / Schedule Trigger (every 6 hrs)
 | Blog feed | ISR (60s revalidation), featured hero, bento grid |
 | Post pages | Auto table of contents, reading progress bar, related posts |
 | Tag system | Per-tag archive pages with co-occurring tag cloud |
-| Search | Live Supabase search modal — open with ⌘K, keyboard navigable |
+| Search | Live Supabase search modal - open with ⌘K, keyboard navigable |
 | Newsletter | Subscriber signup with re-subscribe support |
 | Admin panel | Password-protected pipeline trigger at `/admin` |
 | About page | Full pipeline documentation |
@@ -116,7 +116,7 @@ Webhook / Schedule Trigger (every 6 hrs)
 - Admin panel uses a dedicated `ADMIN_SECRET` separate from the n8n API key
 - Rate limiting on admin auth endpoint (5 attempts / 15 min per IP)
 - Timing-safe password comparison via `crypto.timingSafeEqual`
-- Admin session stored in `sessionStorage` — cleared on tab close
+- Admin session stored in `sessionStorage` - cleared on tab close
 - Supabase service role key is server-only, never exposed to the client
 - Public reads use the anon client with Row Level Security enforced
 - Image `remotePatterns` restricted to `*.supabase.co`
@@ -165,10 +165,10 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 
-# API auth — used by n8n to publish posts
+# API auth - used by n8n to publish posts
 API_SECRET_KEY=
 
-# Admin panel — separate from API key
+# Admin panel - separate from API key
 ADMIN_SECRET=
 
 # n8n webhook
@@ -261,9 +261,9 @@ Subscribes an email address. Body: `{ "email": "user@example.com" }`
 
 ## Database Schema
 
-**`posts`** — `id, title, slug, excerpt, body_html, meta_description, featured_image_url, primary_keyword, tags[], status, word_count, reading_time, published_at, run_id, interest_score`
+**`posts`** - `id, title, slug, excerpt, body_html, meta_description, featured_image_url, primary_keyword, tags[], status, word_count, reading_time, published_at, run_id, interest_score`
 
-**`subscribers`** — `id, email, subscribed_at, confirmed, unsubscribed`
+**`subscribers`** - `id, email, subscribed_at, confirmed, unsubscribed`
 
 RLS enabled on both tables. Anonymous SELECT restricted to `status = 'published'` posts only. All writes require the service role key.
 
@@ -274,7 +274,7 @@ RLS enabled on both tables. Anonymous SELECT restricted to `status = 'published'
 1. Push to GitHub
 2. Import the repo in [vercel.com](https://vercel.com)
 3. Add all environment variables from the list above
-4. Deploy — Vercel handles the rest
+4. Deploy - Vercel handles the rest
 
 > After updating any environment variable in Vercel, trigger a manual redeploy for changes to take effect.
 
@@ -286,5 +286,5 @@ The full n8n workflow definition that powers this pipeline is exported at [`Zero
 
 ## Changelog
 
-- **2026-07-29** — Verified the 6-hour schedule trigger (`Every 6 Hours`) would be safe to enable as a documented fallback alongside the primary webhook (checked it against the existing two-layer duplicate-topic detection: fuzzy title-overlap filtering against the last 15 published posts, plus an exact slug check immediately before publish/email). The trigger is currently left **disabled** pending an explicit decision to turn on unsupervised, recurring auto-publish-and-email — since flipping it on has real consequences for live subscribers and the live site, that's a call for a human to make deliberately rather than something to flip silently as a "bug fix."
-- **2026-07-29** — Added retry (`retryOnFail`, 3 tries, 2s backoff) to the RSS, Reddit, Google Trends, Mastodon, SerpAPI research, and site-publish HTTP calls, which previously had no resilience against transient failures. The four scraping sources (RSS/Reddit/Trends/Mastodon) also continue past a hard failure (`continueRegularOutput`) so one dead source degrades gracefully instead of killing the run; the SerpAPI research calls and the final publish-to-site call intentionally do **not** get that same continue-on-fail treatment, so a real failure there still surfaces loudly rather than silently short-circuiting a publish or email step.
+- **2026-07-29** - Verified the 6-hour schedule trigger (`Every 6 Hours`) would be safe to enable as a documented fallback alongside the primary webhook (checked it against the existing two-layer duplicate-topic detection: fuzzy title-overlap filtering against the last 15 published posts, plus an exact slug check immediately before publish/email). The trigger is currently left **disabled** pending an explicit decision to turn on unsupervised, recurring auto-publish-and-email - since flipping it on has real consequences for live subscribers and the live site, that's a call for a human to make deliberately rather than something to flip silently as a "bug fix."
+- **2026-07-29** - Added retry (`retryOnFail`, 3 tries, 2s backoff) to the RSS, Reddit, Google Trends, Mastodon, SerpAPI research, and site-publish HTTP calls, which previously had no resilience against transient failures. The four scraping sources (RSS/Reddit/Trends/Mastodon) also continue past a hard failure (`continueRegularOutput`) so one dead source degrades gracefully instead of killing the run; the SerpAPI research calls and the final publish-to-site call intentionally do **not** get that same continue-on-fail treatment, so a real failure there still surfaces loudly rather than silently short-circuiting a publish or email step.
