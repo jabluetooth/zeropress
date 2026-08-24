@@ -2,7 +2,7 @@
 
 > An end-to-end automated content pipeline that researches trending topics, writes SEO-optimized blog posts, generates cover images, publishes to a custom Next.js site, distributes newsletters, and logs performance - with zero human intervention.
 
-[![Live](https://img.shields.io/badge/Live_Demo-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://zeropressby.filheinzrelatorre.com)
+[![Live](https://img.shields.io/badge/Live_Demo-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://zeropressv1.vercel.app)
 
 ![n8n](https://img.shields.io/badge/n8n-EA4B71?style=for-the-badge&logo=n8n&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js&logoColor=white)
@@ -257,7 +257,7 @@ Creates or updates a post (upserts by slug). Called by n8n after content generat
 {
   "id": "uuid",
   "slug": "post-slug",
-  "link": "https://zeropressby.filheinzrelatorre.com/post/post-slug",
+  "link": "https://zeropressv1.vercel.app/post/post-slug",
   "status": "published",
   "title": "Post Title",
   "created": true
