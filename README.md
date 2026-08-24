@@ -2,9 +2,22 @@
 
 > An end-to-end automated content pipeline that researches trending topics, writes SEO-optimized blog posts, generates cover images, publishes to a custom Next.js site, distributes newsletters, and logs performance - with zero human intervention.
 
-**Built by Fil Heinz O. Re La Torre**
+[![Live](https://img.shields.io/badge/Live_Demo-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://zeropressv1.vercel.app)
 
-**Live:** [zeropressv1.vercel.app](https://zeropressv1.vercel.app)
+![n8n](https://img.shields.io/badge/n8n-EA4B71?style=for-the-badge&logo=n8n&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js&logoColor=white)
+![Groq](https://img.shields.io/badge/Groq-F55036?style=for-the-badge&logo=groq&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+
+<br>
+
+<!-- HERO: screenshot or short GIF (10-15s) of the blog homepage bento grid, then a
+     scroll into a published post showing the auto-generated cover image and table of
+     contents. A second frame of the /admin trigger panel firing a pipeline run would
+     show the "zero-touch" part, not just the output. Save as docs/demo.gif or
+     docs/screenshot.png, add here as: -->
+<!-- <p align="center"><img src="docs/demo.gif" alt="ZeroPress demo" width="800"></p> -->
 
 ---
 
@@ -288,3 +301,20 @@ The full n8n workflow definition that powers this pipeline is exported at [`Zero
 
 - **2026-07-29** - Verified the 6-hour schedule trigger (`Every 6 Hours`) would be safe to enable as a documented fallback alongside the primary webhook (checked it against the existing two-layer duplicate-topic detection: fuzzy title-overlap filtering against the last 15 published posts, plus an exact slug check immediately before publish/email). The trigger is currently left **disabled** pending an explicit decision to turn on unsupervised, recurring auto-publish-and-email - since flipping it on has real consequences for live subscribers and the live site, that's a call for a human to make deliberately rather than something to flip silently as a "bug fix."
 - **2026-07-29** - Added retry (`retryOnFail`, 3 tries, 2s backoff) to the RSS, Reddit, Google Trends, Mastodon, SerpAPI research, and site-publish HTTP calls, which previously had no resilience against transient failures. The four scraping sources (RSS/Reddit/Trends/Mastodon) also continue past a hard failure (`continueRegularOutput`) so one dead source degrades gracefully instead of killing the run; the SerpAPI research calls and the final publish-to-site call intentionally do **not** get that same continue-on-fail treatment, so a real failure there still surfaces loudly rather than silently short-circuiting a publish or email step.
+
+---
+
+## About the developer
+
+**Fil Heinz O. Re La Torre** - Automation & AI Solutions Engineer, building integrations and AI-backed workflows that go from idea to production in days.
+
+[![Portfolio](https://img.shields.io/badge/Portfolio-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://www.filheinzrelatorre.com)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://ph.linkedin.com/in/filheinzrelatorre)
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/jabluetooth)
+[![Gmail](https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:filheinz27@gmail.com)
+
+**Other projects:** [Match](https://github.com/jabluetooth/match) · [Mimo](https://github.com/jabluetooth/mimo) · [Insight](https://github.com/jabluetooth/insight) · [Se7en](https://github.com/jabluetooth/se7en) · [see all →](https://github.com/jabluetooth)
+
+## License
+
+MIT - see [LICENSE](LICENSE)
