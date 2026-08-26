@@ -245,11 +245,12 @@ a { color: inherit; text-decoration: none; }
   animation: zp-pulse 2.6s ease-in-out infinite;
   flex-shrink: 0;
 }
-/* Footer-only: more compact than the base .ai-badge (also used on /admin,
-   left untouched there). */
+/* Footer-only: noticeably more compact than the base .ai-badge (also used
+   on /admin, left untouched there) — just the pulsing dot plus "AI". */
 .zp-footer__badge {
-  gap: 5px; padding: 3px 8px 3px 6px; font-size: 0.66rem;
+  gap: 4px; padding: 2px 7px 2px 5px; font-size: 0.62rem;
 }
+.zp-footer__badge .dot { width: 5px; height: 5px; }
 @keyframes zp-pulse {
   0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-bright) 55%, transparent); }
   50%      { box-shadow: 0 0 0 5px transparent; }
