@@ -78,9 +78,9 @@ function Footer() {
             <p className="zp-footer__tagline">
               Field notes on models, inference, and shipping AI products.
             </p>
-            <span className="ai-badge zp-footer__badge" title="Published by an automated AI pipeline">
+            <span className="ai-badge zp-footer__badge">
               <span className="dot" />
-              AI
+              AI&nbsp;pipeline
             </span>
             <div className="zp-footer__icon-row">
               {FOOTER_SOCIAL_LINKS.map(({ label, href, Icon }) => (
