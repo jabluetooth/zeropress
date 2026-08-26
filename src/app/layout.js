@@ -1,5 +1,4 @@
 import './globals.css';
-import SearchModal from '@/components/SearchModal';
 import NavLinks from '@/components/NavLinks';
 
 export const metadata = {
@@ -42,17 +41,8 @@ function Nav() {
           <span className="zp-logo__word">Zero<b>Press</b></span>
         </a>
 
-        {/* Links */}
+        {/* Links + search */}
         <NavLinks />
-
-        {/* Right side */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span className="ai-badge">
-            <span className="dot" />
-            AI&nbsp;pipeline
-          </span>
-          <SearchModal />
-        </div>
       </div>
     </nav>
   );
@@ -88,7 +78,7 @@ function Footer() {
             <p className="zp-footer__tagline">
               Field notes on models, inference, and shipping AI products.
             </p>
-            <span className="ai-badge">
+            <span className="ai-badge zp-footer__badge">
               <span className="dot" />
               AI&nbsp;pipeline
             </span>

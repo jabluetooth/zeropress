@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import SearchBar from './SearchBar';
 
 const LINKS = [
   { href: '/', label: 'Latest' },
@@ -39,6 +40,7 @@ export default function NavLinks() {
             </a>
           );
         })}
+        <SearchBar />
       </div>
 
       <button

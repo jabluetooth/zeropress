@@ -151,40 +151,31 @@ a { color: inherit; text-decoration: none; }
 .zp-mobile-nav__link:hover { background: var(--paper-2); color: var(--ink); }
 .zp-mobile-nav__link--active { background: var(--accent-tint); color: var(--accent); font-weight: 600; }
 
-.zp-search {
-  display: inline-flex; align-items: center; gap: 8px;
-  height: 38px; padding: 0 14px; border-radius: var(--r-pill);
-  background: var(--surface); border: 1px solid var(--line);
-  color: var(--ink-3); font-size: 0.85rem; cursor: text;
-  min-width: 170px; transition: border-color .18s;
-  font-family: var(--font);
+/* ============================================================================
+   SEARCH — icon trigger beside the nav links; expands into an inline panel
+   anchored to itself instead of a centered, backdrop-covered modal.
+   ============================================================================ */
+.zp-search-wrap { position: relative; }
+.zp-search-trigger {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; padding: 0; margin-left: 4px;
+  border-radius: var(--r-pill); border: 1px solid transparent;
+  background: transparent; color: var(--ink-2); cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
 }
-.zp-search:hover { border-color: var(--line-2); }
-.zp-search kbd {
-  margin-left: auto; font-family: var(--mono); font-size: 0.68rem;
-  background: var(--paper-2); border: 1px solid var(--line);
-  border-radius: 5px; padding: 1px 5px; color: var(--ink-3);
+.zp-search-trigger:hover { background: var(--paper-2); color: var(--ink); }
+.zp-search-trigger[aria-expanded="true"] {
+  background: var(--surface); border-color: var(--line); color: var(--ink);
 }
 
-/* ============================================================================
-   SEARCH MODAL
-   ============================================================================ */
-.search-backdrop {
-  position: fixed; inset: 0; z-index: 200;
-  background: rgba(24,26,18,0.45);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  animation: fade-in .15s ease;
-}
-.search-modal {
-  position: fixed; top: 18vh; left: 50%; transform: translateX(-50%);
-  z-index: 201; width: 100%; max-width: 620px;
+.zp-search-panel {
+  position: absolute; top: calc(100% + 10px); right: 0;
+  z-index: 90; width: min(360px, 86vw);
   background: var(--surface); border: 1px solid var(--line-2);
   border-radius: var(--r-lg); box-shadow: 0 24px 64px -12px rgba(24,26,18,0.35);
-  overflow: hidden; animation: slide-up .18s cubic-bezier(.16,1,.3,1);
+  overflow: hidden; animation: slide-up .16s cubic-bezier(.16,1,.3,1);
 }
-@keyframes fade-in  { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slide-up { from { opacity: 0; transform: translateX(-50%) translateY(12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+@keyframes slide-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
 .search-modal__bar {
   display: flex; align-items: center; gap: 12px;
@@ -253,6 +244,11 @@ a { color: inherit; text-decoration: none; }
   background: var(--accent-bright);
   animation: zp-pulse 2.6s ease-in-out infinite;
   flex-shrink: 0;
+}
+/* Footer-only: more compact than the base .ai-badge (also used on /admin,
+   left untouched there). */
+.zp-footer__badge {
+  gap: 5px; padding: 3px 8px 3px 6px; font-size: 0.66rem;
 }
 @keyframes zp-pulse {
   0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-bright) 55%, transparent); }
@@ -741,7 +737,6 @@ a { color: inherit; text-decoration: none; }
 }
 @media (max-width: 760px) {
   .zp-nav__inner { padding: 0 16px; }
-  .zp-search { display: none; }
   .zp-nav__links .zp-nav__link { display: none; }
   .zp-nav__toggle { display: flex; }
   .art__grid { grid-template-columns: 1fr; }
