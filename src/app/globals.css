@@ -248,6 +248,7 @@ a { color: inherit; text-decoration: none; }
 /* Footer-only: noticeably more compact than the base .ai-badge (also used
    on /admin, left untouched there) — just the pulsing dot plus "AI". */
 .zp-footer__badge {
+  align-self: flex-start;
   gap: 4px; padding: 2px 7px 2px 5px; font-size: 0.62rem;
 }
 .zp-footer__badge .dot { width: 5px; height: 5px; }
