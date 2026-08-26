@@ -1,5 +1,6 @@
 import './globals.css';
 import SearchModal from '@/components/SearchModal';
+import NavLinks from '@/components/NavLinks';
 
 export const metadata = {
   title: {
@@ -42,10 +43,7 @@ function Nav() {
         </a>
 
         {/* Links */}
-        <div className="zp-nav__links">
-          <a className="zp-nav__link" href="/">Latest</a>
-          <a className="zp-nav__link" href="/about">About</a>
-        </div>
+        <NavLinks />
 
         {/* Right side */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -88,13 +86,11 @@ function Footer() {
 
           <div className="zp-footer__brand-foot">
             <p className="zp-footer__tagline">
-              Notes on machine learning, inference, and the craft of shipping AI
-              products — researched, drafted, and published by an automated
-              pipeline, edited for taste.
+              Field notes on models, inference, and shipping AI products.
             </p>
             <span className="ai-badge">
               <span className="dot" />
-              Published by an AI pipeline
+              AI&nbsp;pipeline
             </span>
             <div className="zp-footer__icon-row">
               {FOOTER_SOCIAL_LINKS.map(({ label, href, Icon }) => (

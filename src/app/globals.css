@@ -121,7 +121,35 @@ a { color: inherit; text-decoration: none; }
   transition: background .18s, color .18s;
 }
 .zp-nav__link:hover { background: var(--paper-2); color: var(--ink); }
-.zp-nav__link--active { color: var(--ink); }
+.zp-nav__link--active { background: var(--paper-2); color: var(--ink); font-weight: 600; }
+
+/* Mobile menu toggle — hidden on desktop, shown once .zp-nav__link is
+   hidden below 760px (see RESPONSIVE section) so the nav links stay
+   reachable instead of just disappearing. */
+.zp-nav__toggle {
+  display: none;
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; width: 38px; height: 38px; padding: 0;
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+  background: var(--surface); cursor: pointer; flex-shrink: 0;
+}
+.zp-nav__toggle-bar {
+  display: block; width: 16px; height: 2px; border-radius: 1px;
+  background: var(--ink-2);
+}
+
+.zp-mobile-nav {
+  position: absolute; top: 100%; left: 0; right: 0;
+  display: flex; flex-direction: column; padding: 8px;
+  background: var(--surface); border-bottom: 1px solid var(--line);
+  box-shadow: 0 16px 32px -12px rgba(24,26,18,0.16);
+}
+.zp-mobile-nav__link {
+  font-size: 0.95rem; font-weight: 500; color: var(--ink-2);
+  padding: 12px 14px; border-radius: var(--r-sm);
+}
+.zp-mobile-nav__link:hover { background: var(--paper-2); color: var(--ink); }
+.zp-mobile-nav__link--active { background: var(--accent-tint); color: var(--accent); font-weight: 600; }
 
 .zp-search {
   display: inline-flex; align-items: center; gap: 8px;
@@ -715,6 +743,7 @@ a { color: inherit; text-decoration: none; }
   .zp-nav__inner { padding: 0 16px; }
   .zp-search { display: none; }
   .zp-nav__links .zp-nav__link { display: none; }
+  .zp-nav__toggle { display: flex; }
   .art__grid { grid-template-columns: 1fr; }
   .toc { display: none; }
   .wrap, .home, .art { padding-left: 16px; padding-right: 16px; }
