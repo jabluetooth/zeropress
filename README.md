@@ -12,12 +12,7 @@
 
 <br>
 
-<!-- HERO: screenshot or short GIF (10-15s) of the blog homepage bento grid, then a
-     scroll into a published post showing the auto-generated cover image and table of
-     contents. A second frame of the /admin trigger panel firing a pipeline run would
-     show the "zero-touch" part, not just the output. Save as docs/demo.gif or
-     docs/screenshot.png, add here as: -->
-<!-- <p align="center"><img src="docs/demo.gif" alt="ZeroPress demo" width="800"></p> -->
+<p align="center"><img src="docs/demo.gif" alt="ZeroPress demo" width="800"></p>
 
 ---
 
